@@ -4,10 +4,11 @@
     "moduleResolution": "node",
     "target": "ES2023",
     "strict": true,
-    "rootDir": "src",
     "outDir": "dist",
+    "sourceMap": true,
     "esModuleInterop": true,
     "ignoreDeprecations": "5.0",
+    "lib": ["esnext"],
     "forceConsistentCasingInFileNames": true
   },
   "include": ["src"]
