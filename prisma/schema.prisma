@@ -1,0 +1,95 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum OrderStatus {
+  ready
+  pending
+  delivered
+  picked_up
+  in_progress
+}
+
+enum ReminderType {
+  pickup_reminder
+  ready_notification
+}
+
+model Laundry {
+  id             String   @id @default(uuid()) @db.Uuid
+  name           String
+  whatsappNumber String   @unique
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  customers Customer[]
+  orders    Order[]
+  reminders Reminder[]
+}
+
+model Customer {
+  id          String  @id @default(uuid()) @db.Uuid
+  laundryId   String  @db.Uuid
+  phoneNumber String
+  name        String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  laundry Laundry @relation(fields: [laundryId], references: [id], onDelete: Cascade)
+  orders  Order[]
+
+  @@unique([laundryId, phoneNumber])
+}
+
+model Order {
+  id         String      @id @default(uuid()) @db.Uuid
+  laundryId  String      @db.Uuid
+  customerId String      @db.Uuid
+  pickupDate DateTime?   @db.Date
+  status     OrderStatus @default(pending)
+  isPaid     Boolean     @default(false)
+
+  totalAmount Decimal @default(0) @db.Decimal(18, 2)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  laundry    Laundry     @relation(fields: [laundryId], references: [id], onDelete: Cascade)
+  customer   Customer    @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  orderItems OrderItem[]
+  reminders  Reminder[]
+}
+
+model OrderItem {
+  id      String @id @default(uuid()) @db.Uuid
+  orderId String @db.Uuid
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  itemName   String
+  quantity   Int
+  totalPrice Decimal @default(0) @db.Decimal(12, 2)
+}
+
+model Reminder {
+  id        String       @id @default(uuid()) @db.Uuid
+  laundryId String       @db.Uuid
+  orderId   String       @db.Uuid
+  sendAt    DateTime
+  type      ReminderType
+  sent      Boolean      @default(false)
+  createdAt DateTime     @default(now())
+
+  laundry Laundry @relation(fields: [laundryId], references: [id], onDelete: Cascade)
+  order   Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+}

@@ -1,0 +1,14 @@
+{
+  "compilerOptions": {
+    "module": "ESNext",
+    "moduleResolution": "node",
+    "target": "ES2023",
+    "strict": true,
+    "rootDir": "src",
+    "outDir": "dist",
+    "esModuleInterop": true,
+    "ignoreDeprecations": "5.0",
+    "forceConsistentCasingInFileNames": true
+  },
+  "include": ["src"]
+}
