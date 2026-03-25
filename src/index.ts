@@ -3,29 +3,19 @@ import "dotenv/config";
 import {z} from "zod";
 import {prisma} from "./lib/prisma";
 import app from "./app";
+import config from "@/config/config";
 // If you add your cron later, you can start it here
 // import { startReminders } from "./jobs/reminders";
 
-const envSchema = z.object({
-  DATABASE_URL: z.string().min(1),
-  PORT: z.coerce.number().int().positive().default(3000),
+const server = app.listen(config.port, () => {
+  console.log(`[server] listening on http://localhost:${config.port}`);
 });
 
-const env = envSchema.parse(process.env);
-
-const port = env.PORT;
-
-const server = app.listen(port, () => {
-  console.log(`[server] listening on http://localhost:${port}`);
-});
-
-// Graceful shutdown (important for Prisma and node-cron)
-async function shutdown(signal: string) {
+const shutdown = async (signal: string) => {
   console.log(`[server] ${signal} received: shutting down...`);
   server.close(async (err) => {
     if (err) console.error("[server] error closing server:", err);
     try {
-      // Prisma will reuse pools; disconnect on shutdown only
       await prisma.$disconnect();
     } catch (e) {
       console.error("[server] error during prisma disconnect:", e);
@@ -33,7 +23,7 @@ async function shutdown(signal: string) {
       process.exit(0);
     }
   });
-}
+};
 
 process.on("SIGINT", () => shutdown("SIGINT"));
 process.on("SIGTERM", () => shutdown("SIGTERM"));

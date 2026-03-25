@@ -1,11 +1,8 @@
 // src/app.ts
-
 import express from "express";
 import helmet from "helmet";
 import morgan from "morgan";
 import routes from "@/routes";
-
-const router = express.Router();
 
 const app = express();
 
