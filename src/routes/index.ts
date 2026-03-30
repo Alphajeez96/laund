@@ -1,5 +1,6 @@
 import express from "express";
 import healthRoute from "@/modules/health/health.route";
+import customersRoute from "@/modules/customer/customers.routes";
 
 const router = express.Router();
 
@@ -13,6 +14,11 @@ const routes: RouteConfig[] = [
   {
     path: "/health",
     route: healthRoute,
+  },
+
+  {
+    path: "/customers",
+    route: customersRoute,
   },
 ];
 
