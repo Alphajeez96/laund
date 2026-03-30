@@ -3,7 +3,7 @@ import {isValidPhoneNumber} from "libphonenumber-js";
 
 export const createCustomerSchema = z.object({
   body: z.object({
-    name: z.string().min(1, "Name is required"),
+    name: z.string().min(1).max(100).optional(),
     laundryId: z.uuid("Laundry ID must be a valid UUID"),
     phoneNumber: z
       .string()
