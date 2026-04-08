@@ -2,6 +2,7 @@ import express from "express";
 import healthRoute from "../modules/health/health.route";
 import customersRoute from "../modules/customer/customers.route";
 import laundryRoute from "../modules/laundry/laundry.route";
+import ordersRoute from "../modules/order/order.route";
 
 const router = express.Router();
 
@@ -25,6 +26,11 @@ const routes: RouteConfig[] = [
   {
     path: "/laundry",
     route: laundryRoute,
+  },
+
+  {
+    path: "/orders",
+    route: ordersRoute,
   },
 ];
 

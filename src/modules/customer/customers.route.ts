@@ -1,8 +1,10 @@
 import {Router} from "express";
-import {PostController} from "./customers.controller";
+
+import {CustomerController} from "./customers.controller";
 
 const router = Router();
 
-router.route("/").post(PostController.createCustomer);
+router.route("/").post(CustomerController.createCustomer).get(CustomerController.listCustomers);
+router.route("/:id").get(CustomerController.getCustomer);
 
 export default router;

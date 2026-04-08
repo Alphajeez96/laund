@@ -12,6 +12,30 @@ const createCustomer = async (data: ICreateCustomer) => {
   return CustomerRepository.createCustomer(data);
 };
 
+const getCustomer = async (id: string, laundryId: string) => {
+  const laundry = await LaundryRepository.existsById({id: laundryId});
+  if (!laundry) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Laundry not found");
+  }
+
+  const customer = await CustomerRepository.findById(id);
+  if (!customer || customer.laundryId !== laundryId) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Customer not found");
+  }
+  return customer;
+};
+
+const listCustomers = async (laundryId: string) => {
+  const laundry = await LaundryRepository.existsById({id: laundryId});
+  if (!laundry) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Laundry not found");
+  }
+
+  return CustomerRepository.findManyByLaundryId(laundryId);
+};
+
 export const CustomerService = {
   createCustomer,
+  getCustomer,
+  listCustomers,
 };
