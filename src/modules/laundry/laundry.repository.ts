@@ -5,10 +5,10 @@ const createLaundry = async (data: ICreateLaundry) => {
   return prisma.laundry.create({data});
 };
 
-const existsById = async (id: string) => {
+const existsById = async ({id, full = false}: {id: string; full?: boolean}) => {
   return prisma.laundry.findUnique({
     where: {id},
-    select: {id: true},
+    ...(full ? {} : {select: {id: true}}),
   });
 };
 

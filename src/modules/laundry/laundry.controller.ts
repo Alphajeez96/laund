@@ -15,6 +15,18 @@ const createLaundry = catchAsync(async (req) => {
   };
 });
 
+const getLaundry = catchAsync(async (req) => {
+  const {params} = await zParse(laundrySchema.getLaundryParamsSchema, req);
+  const laundry = await LaundryService.getLaundry(params.id);
+
+  return {
+    data: laundry,
+    statusCode: httpStatus.OK,
+    message: "Laundry fetched successfully",
+  };
+});
+
 export const LaundryController = {
+  getLaundry,
   createLaundry,
 };

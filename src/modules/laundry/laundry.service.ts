@@ -3,6 +3,12 @@ import ApiError from "@/utils/api-error";
 import {type ICreateLaundry} from "./laundry.validation";
 import {LaundryRepository} from "../laundry/laundry.repository";
 
+const getLaundry = async (id: string) => {
+  const laundry = await LaundryRepository.existsById({id, full: true});
+  if (!laundry) throw new ApiError(httpStatus.NOT_FOUND, "Laundry not found");
+  return laundry;
+};
+
 const createLaundry = async (data: ICreateLaundry) => {
   const existingLaundry = await LaundryRepository.findByWhatsappNumber(
     data.whatsappNumber,
@@ -14,5 +20,6 @@ const createLaundry = async (data: ICreateLaundry) => {
 };
 
 export const LaundryService = {
+  getLaundry,
   createLaundry,
 };
