@@ -5,7 +5,7 @@ import {CustomerRepository} from "./customer.repository";
 import {LaundryRepository} from "../laundry/laundry.repository";
 
 const createCustomer = async (data: ICreateCustomer) => {
-  const laundry = await LaundryRepository.existsById(data.laundryId);
+  const laundry = await LaundryRepository.existsById({id: data.laundryId});
   if (!laundry) {
     throw new ApiError(httpStatus.NOT_FOUND, "Laundry not found");
   }
