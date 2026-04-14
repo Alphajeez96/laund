@@ -19,7 +19,7 @@ const findManyByLaundryId = async (laundryId: string) => {
 };
 
 export const CustomerRepository = {
-  createCustomer,
   findById,
+  createCustomer,
   findManyByLaundryId,
 };

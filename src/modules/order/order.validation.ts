@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {OrderStatus} from "../../../generated/prisma/enums";
+import {OrderStatus} from "generated/prisma/enums";
 
 const orderStatusValues = [
   OrderStatus.ready,
@@ -11,15 +11,16 @@ const orderStatusValues = [
 
 export const createOrderSchema = z.object({
   body: z.object({
+    pickupDate: z.iso.date().optional(),
+    totalAmount: z.number().nonnegative().optional(),
     laundryId: z.uuid("Laundry ID must be a valid UUID"),
     customerId: z.uuid("Customer ID must be a valid UUID"),
-    pickupDate: z.iso.date().optional(),
     orderItems: z
       .array(
         z.object({
           itemName: z.string().min(1).max(500),
           quantity: z.number().int().positive(),
-          totalPrice: z.number().nonnegative(),
+          totalPrice: z.number().nonnegative().optional(),
         }),
       )
       .min(1, "At least one order item is required"),

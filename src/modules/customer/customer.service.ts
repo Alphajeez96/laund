@@ -1,7 +1,7 @@
 import httpStatus from "http-status";
 import ApiError from "@/utils/api-error";
-import {type ICreateCustomer} from "./customer.validation";
 import {CustomerRepository} from "./customer.repository";
+import {type ICreateCustomer} from "./customer.validation";
 import {LaundryRepository} from "../laundry/laundry.repository";
 
 const createCustomer = async (data: ICreateCustomer) => {
@@ -35,7 +35,7 @@ const listCustomers = async (laundryId: string) => {
 };
 
 export const CustomerService = {
-  createCustomer,
   getCustomer,
   listCustomers,
+  createCustomer,
 };

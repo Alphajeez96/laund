@@ -1,9 +1,7 @@
 import httpStatus from "http-status";
-
-import catchAsync from "@/utils/catch-async";
 import zParse from "@/utils/z-parse";
-
 import {OrderService} from "./order.service";
+import catchAsync from "@/utils/catch-async";
 import * as orderSchema from "./order.validation";
 
 const createOrder = catchAsync(async (req) => {
@@ -40,8 +38,15 @@ const getOrder = catchAsync(async (req) => {
 });
 
 const updateOrder = catchAsync(async (req) => {
-  const {params, query, body} = await zParse(orderSchema.updateOrderSchema, req);
-  const order = await OrderService.updateOrder(params.id, query.laundryId, body);
+  const {params, query, body} = await zParse(
+    orderSchema.updateOrderSchema,
+    req,
+  );
+  const order = await OrderService.updateOrder(
+    params.id,
+    query.laundryId,
+    body,
+  );
 
   return {
     data: order,
@@ -51,8 +56,8 @@ const updateOrder = catchAsync(async (req) => {
 });
 
 export const OrderController = {
-  createOrder,
   getOrder,
   listOrders,
+  createOrder,
   updateOrder,
 };

@@ -1,18 +1,13 @@
 import httpStatus from "http-status";
-
 import ApiError from "@/utils/api-error";
-import type {OrderStatus} from "../../../generated/prisma/enums";
-import {CustomerRepository} from "../customer/customer.repository";
-import {LaundryRepository} from "../laundry/laundry.repository";
-
 import {OrderRepository} from "./order.repository";
 import type {ICreateOrder} from "./order.validation";
+import type {OrderStatus} from "generated/prisma/enums";
+import {LaundryRepository} from "../laundry/laundry.repository";
+import {CustomerRepository} from "../customer/customer.repository";
 
 const createOrder = async (data: ICreateOrder) => {
-  const laundry = await LaundryRepository.existsById({id: data.laundryId});
-  if (!laundry) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Laundry not found");
-  }
+  await checkLaundryExists(data.laundryId);
 
   const customer = await CustomerRepository.findById(data.customerId);
   if (!customer || customer.laundryId !== data.laundryId) {
@@ -31,11 +26,7 @@ const getOrder = async (id: string, laundryId: string) => {
 };
 
 const listOrders = async (laundryId: string, status?: OrderStatus) => {
-  const laundry = await LaundryRepository.existsById({id: laundryId});
-  if (!laundry) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Laundry not found");
-  }
-
+  await checkLaundryExists(laundryId);
   return OrderRepository.findManyByLaundryId(laundryId, status);
 };
 
@@ -44,12 +35,16 @@ const updateOrder = async (
   laundryId: string,
   patch: {status?: OrderStatus; isPaid?: boolean; totalAmount?: number},
 ) => {
-  const order = await OrderRepository.findById(id);
-  if (!order || order.laundryId !== laundryId) {
-    throw new ApiError(httpStatus.NOT_FOUND, "Order not found");
-  }
-
+  await getOrder(id, laundryId);
   return OrderRepository.updateOrder(id, patch);
+};
+
+const checkLaundryExists = async (id: string) => {
+  const laundry = await LaundryRepository.existsById({id});
+  if (!laundry) {
+    throw new ApiError(httpStatus.NOT_FOUND, "Laundry not found");
+  }
+  return laundry;
 };
 
 export const OrderService = {

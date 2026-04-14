@@ -1,11 +1,12 @@
 import {prisma} from "@/lib/prisma";
-
-import type {OrderStatus} from "../../../generated/prisma/enums";
-
 import type {ICreateOrder} from "./order.validation";
+import type {OrderStatus} from "generated/prisma/enums";
 
 const createOrder = async (data: ICreateOrder) => {
-  const totalAmount = data.orderItems.reduce((sum, item) => sum + item.totalPrice, 0);
+  const totalAmount = data.orderItems.reduce(
+    (sum, item) => sum + (item?.totalPrice ?? 0),
+    0,
+  );
 
   const pickupDate =
     data.pickupDate !== undefined
@@ -14,21 +15,21 @@ const createOrder = async (data: ICreateOrder) => {
 
   return prisma.order.create({
     data: {
+      pickupDate,
       laundryId: data.laundryId,
       customerId: data.customerId,
-      pickupDate,
-      totalAmount,
+      totalAmount: data.totalAmount ?? totalAmount,
       orderItems: {
         create: data.orderItems.map((item) => ({
           itemName: item.itemName,
           quantity: item.quantity,
-          totalPrice: item.totalPrice,
+          totalPrice: item?.totalPrice ?? 0, // likely defunct, left in the while
         })),
       },
     },
     include: {
-      orderItems: true,
       customer: true,
+      orderItems: true,
     },
   });
 };
@@ -40,38 +41,35 @@ const findById = async (id: string) => {
   });
 };
 
-const findManyByLaundryId = async (
-  laundryId: string,
-  status?: OrderStatus,
-) => {
+const findManyByLaundryId = async (laundryId: string, status?: OrderStatus) => {
   return prisma.order.findMany({
     where: {
       laundryId,
       ...(status ? {status} : {}),
     },
-    include: {orderItems: true, customer: true},
     orderBy: {createdAt: "desc"},
+    include: {orderItems: true, customer: true},
   });
 };
 
 const updateOrder = async (
   id: string,
   data: {
-    status?: OrderStatus;
     isPaid?: boolean;
+    status?: OrderStatus;
     totalAmount?: number;
   },
 ) => {
   return prisma.order.update({
-    where: {id},
     data,
+    where: {id},
     include: {orderItems: true, customer: true},
   });
 };
 
 export const OrderRepository = {
-  createOrder,
   findById,
-  findManyByLaundryId,
+  createOrder,
   updateOrder,
+  findManyByLaundryId,
 };

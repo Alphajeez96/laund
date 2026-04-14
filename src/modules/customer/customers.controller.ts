@@ -1,8 +1,6 @@
 import httpStatus from "http-status";
-
-import catchAsync from "@/utils/catch-async";
 import zParse from "@/utils/z-parse";
-
+import catchAsync from "@/utils/catch-async";
 import {CustomerService} from "./customer.service";
 import * as customerSchema from "./customer.validation";
 
@@ -30,7 +28,10 @@ const listCustomers = catchAsync(async (req) => {
 
 const getCustomer = catchAsync(async (req) => {
   const {params, query} = await zParse(customerSchema.getCustomerSchema, req);
-  const customer = await CustomerService.getCustomer(params.id, query.laundryId);
+  const customer = await CustomerService.getCustomer(
+    params.id,
+    query.laundryId,
+  );
 
   return {
     data: customer,
@@ -40,7 +41,7 @@ const getCustomer = catchAsync(async (req) => {
 });
 
 export const CustomerController = {
-  createCustomer,
   getCustomer,
   listCustomers,
+  createCustomer,
 };
