@@ -29,8 +29,8 @@ export const createOrderSchema = z.object({
 
 export const listOrdersQuerySchema = z.object({
   query: z.object({
-    laundryId: z.uuid("Laundry ID must be a valid UUID"),
     status: z.enum(orderStatusValues).optional(),
+    laundryId: z.uuid("Laundry ID must be a valid UUID"),
   }),
 });
 
@@ -52,15 +52,12 @@ export const updateOrderSchema = z.object({
   }),
   body: z
     .object({
-      status: z.enum(orderStatusValues).optional(),
       isPaid: z.boolean().optional(),
+      status: z.enum(orderStatusValues).optional(),
       totalAmount: z.number().nonnegative().optional(),
     })
     .refine(
-      (b) =>
-        b.status !== undefined ||
-        b.isPaid !== undefined ||
-        b.totalAmount !== undefined,
+      (b) => [b.status, b.isPaid, b.totalAmount].some((v) => v !== undefined),
       {message: "At least one field is required"},
     ),
 });
