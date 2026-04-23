@@ -1,7 +1,21 @@
 import config from "@/config/config";
+import {requestJson} from "@/utils/catch-async";
 
+const BASE_URL = config.gupshup.baseUrl;
 const FALLBACK_CACHE_MS = 23 * 60 * 60 * 1000;
 let cache: {token: string; expiresAtMs: number} | null = null;
+type PartnerAppTokenResponse = {
+  status?: string;
+  message?: string;
+  token?: {
+    token?: string;
+  };
+};
+type PartnerLoginResponse = {
+  token?: string;
+  status?: string;
+  message?: string;
+};
 
 const ttlMsFromJwt = (token: string): number | null => {
   const parts = token.split(".");
@@ -27,31 +41,22 @@ export const getPartnerAccessToken = async (): Promise<string> => {
   const now = Date.now();
   if (cache && now < cache.expiresAtMs) return cache.token;
 
-  const url = `${config.gupshup.baseUrl}account/login`;
   const body = new URLSearchParams({
     email,
     password: config.gupshup.clientSecret,
   });
 
-  const res = await fetch(url, {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/x-www-form-urlencoded",
+  const parsed = await requestJson<PartnerLoginResponse>(
+    `${BASE_URL}account/login`,
+    {
+      context: "partner login",
+      method: "POST",
+      body,
     },
-    body,
-  });
-
-  const raw = await res.text();
-  const parsed = JSON.parse(raw);
-
-  if (!res.ok || parsed.status === "error") {
-    throw new Error(
-      `partner login failed: ${res.status} ${parsed.message ?? raw.slice(0, 200)}`,
-    );
-  }
+  );
 
   const token = parsed.token;
+  if (!token) throw new Error("partner login: token missing in response");
   const ttlFromJwt = ttlMsFromJwt(token);
   cache = {
     token,
@@ -64,3 +69,29 @@ export const getPartnerAccessToken = async (): Promise<string> => {
 export function clearPartnerTokenCache(): void {
   cache = null;
 }
+
+export const getPartnerAppAccessToken = async (
+  appId: string,
+): Promise<string> => {
+  if (!appId) throw new Error("appId is required");
+
+  const partnerToken = await getPartnerAccessToken();
+
+  const parsed = await requestJson<PartnerAppTokenResponse>(
+    `${BASE_URL}app/${encodeURIComponent(appId)}/token`,
+    {
+      context: "partner app token",
+      headers: {
+        Authorization: partnerToken,
+      },
+    },
+  );
+
+  const appToken = parsed.token?.token;
+  if (!appToken) {
+    throw new Error(
+      `partner app token missing in response: ${JSON.stringify(parsed).slice(0, 240)}`,
+    );
+  }
+  return appToken;
+};
