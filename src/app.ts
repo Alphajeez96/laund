@@ -9,6 +9,7 @@ const app = express();
 app.use(helmet());
 app.use(morgan("dev"));
 app.use(express.json());
+
 app.use("/v1", routes);
 
 export default app;

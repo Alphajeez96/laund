@@ -7,6 +7,9 @@ const envSchema = z.object({
   NODE_ENV: z
     .enum(["development", "production", "test"])
     .default("development"),
+  GUPSHUP_BASE_URL: z.string().min(1),
+  GUPSHUP_CLIENT_SECRET: z.string().min(1),
+  GUPSHUP_PARTNER_EMAIL: z.string().optional(),
 });
 
 const env = envSchema.parse(process.env);
@@ -15,4 +18,9 @@ export default {
   port: env.PORT,
   env: env.NODE_ENV,
   databaseUrl: env.DATABASE_URL,
+  gupshup: {
+    baseUrl: env.GUPSHUP_BASE_URL,
+    partnerEmail: env.GUPSHUP_PARTNER_EMAIL,
+    clientSecret: env.GUPSHUP_CLIENT_SECRET,
+  },
 };
