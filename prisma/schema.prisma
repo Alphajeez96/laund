@@ -27,6 +27,8 @@ enum ReminderType {
 
 model Laundry {
   id             String   @id @default(uuid()) @db.Uuid
+  appId          String
+  email          String?
   name           String   @db.VarChar(100)
   whatsappNumber String   @unique
   createdAt      DateTime @default(now())
@@ -41,7 +43,7 @@ model Customer {
   id          String  @id @default(uuid()) @db.Uuid
   laundryId   String  @db.Uuid
   phoneNumber String
-  name        String?   @db.VarChar(100)
+  name        String? @db.VarChar(100)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
