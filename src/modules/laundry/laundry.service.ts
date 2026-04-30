@@ -1,7 +1,8 @@
 import httpStatus from "http-status";
 import ApiError from "@/utils/api-error";
-import {type ICreateLaundry, type IUpdateLaundry} from "./laundry.validation";
+import {createApp} from "@/integrations/gupshup/auth";
 import {LaundryRepository} from "../laundry/laundry.repository";
+import {type ICreateLaundry, type IUpdateLaundry} from "./laundry.validation";
 
 const getLaundry = async (id: string) => {
   const laundry = await LaundryRepository.existsById({id, full: true});
@@ -10,13 +11,15 @@ const getLaundry = async (id: string) => {
 };
 
 const createLaundry = async (data: ICreateLaundry) => {
-  const existingLaundry = await LaundryRepository.findByWhatsappNumber(
-    data.whatsappNumber,
-  );
-  if (existingLaundry) {
+  const {whatsappNumber, name} = data;
+  const itExists = await LaundryRepository.findByWhatsappNumber(whatsappNumber);
+
+  if (itExists) {
     throw new ApiError(httpStatus.CONFLICT, "Laundry already exists");
   }
-  return LaundryRepository.createLaundry(data);
+
+  const {appId = ""} = await createApp(name);
+  return LaundryRepository.createLaundry({...data, appId});
 };
 
 const updateLaundry = async (id: string, data: IUpdateLaundry) => {

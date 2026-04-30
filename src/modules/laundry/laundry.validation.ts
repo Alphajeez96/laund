@@ -16,7 +16,9 @@ export const createLaundrySchema = z.object({
   }),
 });
 
-export type ICreateLaundry = z.infer<typeof createLaundrySchema>["body"];
+export type ICreateLaundry = z.infer<typeof createLaundrySchema>["body"] & {
+  appId: string;
+};
 
 export const updateLaundrySchema = z.object({
   params: z.object({
@@ -30,10 +32,9 @@ export const updateLaundrySchema = z.object({
         .refine((v) => isValidPhoneNumber(v), "Invalid phone number")
         .optional(),
     })
-    .refine(
-      (b) => b.name !== undefined || b.whatsappNumber !== undefined,
-      {message: "At least one field is required"},
-    ),
+    .refine((b) => b.name !== undefined || b.whatsappNumber !== undefined, {
+      message: "At least one field is required",
+    }),
 });
 
 export type IUpdateLaundry = z.infer<typeof updateLaundrySchema>["body"];

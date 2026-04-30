@@ -6,7 +6,9 @@ import * as laundrySchema from "./laundry.validation";
 
 const createLaundry = catchAsync(async (req) => {
   const {body: data} = await zParse(laundrySchema.createLaundrySchema, req);
-  const laundry = await LaundryService.createLaundry(data);
+  const laundry = await LaundryService.createLaundry(
+    data as laundrySchema.ICreateLaundry,
+  );
 
   return {
     data: laundry,
@@ -27,7 +29,10 @@ const getLaundry = catchAsync(async (req) => {
 });
 
 const updateLaundry = catchAsync(async (req) => {
-  const {params, body: data} = await zParse(laundrySchema.updateLaundrySchema, req);
+  const {params, body: data} = await zParse(
+    laundrySchema.updateLaundrySchema,
+    req,
+  );
   const laundry = await LaundryService.updateLaundry(params.id, data);
 
   return {

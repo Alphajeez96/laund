@@ -70,9 +70,7 @@ export function clearPartnerTokenCache(): void {
   cache = null;
 }
 
-export const getPartnerAppAccessToken = async (
-  appId: string,
-): Promise<string> => {
+export const getAppAccessToken = async (appId: string): Promise<string> => {
   if (!appId) throw new Error("appId is required");
 
   const partnerToken = await getPartnerAccessToken();
@@ -94,4 +92,25 @@ export const getPartnerAppAccessToken = async (
     );
   }
   return appToken;
+};
+
+export const createApp = async (name: string) => {
+  const partnerToken = await getPartnerAccessToken();
+  const body = new URLSearchParams({
+    name,
+    templateMessaging: "true",
+  });
+  const parsed = await requestJson<{status: string; appId: string}>(
+    `${BASE_URL}app`,
+    {
+      method: "POST",
+      context: "Create App",
+      headers: {
+        token: partnerToken,
+      },
+      body,
+    },
+  );
+
+  return parsed;
 };
