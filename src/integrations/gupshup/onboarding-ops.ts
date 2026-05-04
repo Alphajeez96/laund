@@ -17,7 +17,6 @@ type IGenerateEmbed = {
 };
 
 export const createApp = async (name: string) => {
-  const partnerToken = await getPartnerAccessToken();
   const body = new URLSearchParams({
     name,
     templateMessaging: "true",
@@ -25,9 +24,6 @@ export const createApp = async (name: string) => {
   const parsed = await requestJson<{status: string; appId: string}>("app", {
     method: "POST",
     context: "Create App",
-    headers: {
-      token: partnerToken,
-    },
     body,
   });
 
