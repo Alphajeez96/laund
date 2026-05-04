@@ -1,6 +1,10 @@
 import httpStatus from "http-status";
 import ApiError from "./api-error";
+import config from "@/config/config";
 import {type Request, type Response} from "express";
+import {getPartnerAccessToken} from "@/integrations/gupshup/auth";
+
+const GUPSHUP_BASE_URL = config.gupshup.baseUrl;
 
 interface APIResponse<T> {
   data?: T;
@@ -9,6 +13,8 @@ interface APIResponse<T> {
   errors?: unknown;
   statusCode: number;
 }
+
+type AuthHeader = "token" | "Authorization";
 
 type ExternalApiEnvelope = {
   status?: string;
@@ -56,20 +62,30 @@ const buildRequestBody = (
 export const requestJson = async <T extends ExternalApiEnvelope>(
   url: string,
   options: ApiClientOptions,
+  authHeader?: AuthHeader,
 ): Promise<T> => {
+  const isAuth = url.includes("account/login");
   const {context, method = "GET", headers, body, ...rest} = options;
-  const finalHeaders = new Headers(headers);
+
+  const finalHeaders = new Headers({
+    ...headers,
+    ...(!isAuth && {[authHeader ?? "token"]: await getPartnerAccessToken()}),
+  });
+
   if (!finalHeaders.has("Accept")) {
     finalHeaders.set("Accept", "application/json");
   }
+
+  const finalUrl = GUPSHUP_BASE_URL + url;
   const finalBody = buildRequestBody(body, finalHeaders);
 
-  const res = await fetch(url, {
+  const res = await fetch(finalUrl, {
     ...rest,
     method,
-    headers: finalHeaders,
     body: finalBody,
+    headers: finalHeaders,
   });
+
   const raw = await res.text();
   const parsed = JSON.parse(raw);
 

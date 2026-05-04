@@ -1,21 +1,9 @@
 import config from "@/config/config";
 import {requestJson} from "@/utils/catch-async";
+import {type PartnerAppTokenResponse, type PartnerLoginResponse} from "./types";
 
-const BASE_URL = config.gupshup.baseUrl;
 const FALLBACK_CACHE_MS = 23 * 60 * 60 * 1000;
 let cache: {token: string; expiresAtMs: number} | null = null;
-type PartnerAppTokenResponse = {
-  status?: string;
-  message?: string;
-  token?: {
-    token?: string;
-  };
-};
-type PartnerLoginResponse = {
-  token?: string;
-  status?: string;
-  message?: string;
-};
 
 const ttlMsFromJwt = (token: string): number | null => {
   const parts = token.split(".");
@@ -46,14 +34,11 @@ export const getPartnerAccessToken = async (): Promise<string> => {
     password: config.gupshup.clientSecret,
   });
 
-  const parsed = await requestJson<PartnerLoginResponse>(
-    `${BASE_URL}account/login`,
-    {
-      context: "partner login",
-      method: "POST",
-      body,
-    },
-  );
+  const parsed = await requestJson<PartnerLoginResponse>("account/login", {
+    context: "partner login",
+    method: "POST",
+    body,
+  });
 
   const token = parsed.token;
   if (!token) throw new Error("partner login: token missing in response");
@@ -73,16 +58,10 @@ export function clearPartnerTokenCache(): void {
 export const getAppAccessToken = async (appId: string): Promise<string> => {
   if (!appId) throw new Error("appId is required");
 
-  const partnerToken = await getPartnerAccessToken();
-
   const parsed = await requestJson<PartnerAppTokenResponse>(
-    `${BASE_URL}app/${encodeURIComponent(appId)}/token`,
-    {
-      context: "partner app token",
-      headers: {
-        Authorization: partnerToken,
-      },
-    },
+    `app/${encodeURIComponent(appId)}/token`,
+    {context: "partner app token"},
+    "Authorization",
   );
 
   const appToken = parsed.token?.token;
@@ -92,25 +71,4 @@ export const getAppAccessToken = async (appId: string): Promise<string> => {
     );
   }
   return appToken;
-};
-
-export const createApp = async (name: string) => {
-  const partnerToken = await getPartnerAccessToken();
-  const body = new URLSearchParams({
-    name,
-    templateMessaging: "true",
-  });
-  const parsed = await requestJson<{status: string; appId: string}>(
-    `${BASE_URL}app`,
-    {
-      method: "POST",
-      context: "Create App",
-      headers: {
-        token: partnerToken,
-      },
-      body,
-    },
-  );
-
-  return parsed;
 };
