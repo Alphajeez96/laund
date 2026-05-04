@@ -1,6 +1,6 @@
 import httpStatus from "http-status";
 import ApiError from "@/utils/api-error";
-import {createApp} from "@/integrations/gupshup/laund-ops";
+import {createApp} from "@/integrations/gupshup/onboarding-ops";
 import {LaundryRepository} from "../laundry/laundry.repository";
 import {type ICreateLaundry, type IUpdateLaundry} from "./laundry.validation";
 
