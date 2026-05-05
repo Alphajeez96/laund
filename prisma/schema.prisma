@@ -47,6 +47,26 @@ model Laundry {
   customers Customer[]
   orders    Order[]
   reminders Reminder[]
+  gupshup   GupshupIntegration?
+}
+
+model GupshupIntegration {
+  id        String @id @default(uuid()) @db.Uuid
+  laundryId String @unique @db.Uuid
+
+  subscriptionId String?
+  callbackUrl    String?
+  tag            String?
+  modes          String?
+  version        Int?
+
+  lastWebhookReceivedAt DateTime?
+  lastError             String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  laundry Laundry @relation(fields: [laundryId], references: [id], onDelete: Cascade)
 }
 
 model Customer {
