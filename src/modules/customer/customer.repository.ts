@@ -18,8 +18,20 @@ const findManyByLaundryId = async (laundryId: string) => {
   });
 };
 
+const findByLaundryAndPhoneNumber = async (
+  laundryId: string,
+  phoneNumber: string,
+) => {
+  return prisma.customer.findUnique({
+    where: {
+      laundryId_phoneNumber: {laundryId, phoneNumber},
+    },
+  });
+};
+
 export const CustomerRepository = {
   findById,
   createCustomer,
   findManyByLaundryId,
+  findByLaundryAndPhoneNumber,
 };

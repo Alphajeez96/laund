@@ -9,6 +9,11 @@ export const setSubscription = async (data: {name: string; appId: string}) => {
     version: config.gupshup.apiVersion,
     modes:
       "MESSAGE,ENQUEUED,SENT,DELIVERED,READ,FAILED,DELETED,ACCOUNT,TEMPLATE,FLOWS_MESSAGE,OTHERS",
+    meta: JSON.stringify({
+      headers: {
+        "x-gupshup-webhook-secret": config.gupshup.webhookSecret!,
+      },
+    }),
   };
 
   const response = await requestJson<{status: string; appId: string}>(

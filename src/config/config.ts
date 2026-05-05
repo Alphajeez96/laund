@@ -10,6 +10,7 @@ const envSchema = z.object({
   GUPSHUP_API_VERSION: z.string(),
   GUPSHUP_WEBHOOK_URL: z.string(),
   GUPSHUP_BASE_URL: z.string().min(1),
+  GUPSHUP_WEBHOOK_SECRET: z.string().min(1),
   GUPSHUP_CLIENT_SECRET: z.string().min(1),
   GUPSHUP_PARTNER_EMAIL: z.string().optional(),
 });
@@ -22,9 +23,10 @@ export default {
   databaseUrl: env.DATABASE_URL,
   gupshup: {
     baseUrl: env.GUPSHUP_BASE_URL,
-    apiVersion: env.GUPSHUP_API_VERSION,
     webhookUrl: env.GUPSHUP_WEBHOOK_URL,
+    apiVersion: env.GUPSHUP_API_VERSION,
     partnerEmail: env.GUPSHUP_PARTNER_EMAIL,
     clientSecret: env.GUPSHUP_CLIENT_SECRET,
+    webhookSecret: env.GUPSHUP_WEBHOOK_SECRET,
   },
 };

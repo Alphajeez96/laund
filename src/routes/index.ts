@@ -3,6 +3,7 @@ import healthRoute from "../modules/health/health.route";
 import customersRoute from "../modules/customer/customers.route";
 import laundryRoute from "../modules/laundry/laundry.route";
 import ordersRoute from "../modules/order/order.route";
+import gupshupHook from "../modules/webhook/gupshup.route";
 
 const router = express.Router();
 
@@ -31,6 +32,11 @@ const routes: RouteConfig[] = [
   {
     path: "/orders",
     route: ordersRoute,
+  },
+
+  {
+    path: "/webhook/gupshup",
+    route: gupshupHook,
   },
 ];
 

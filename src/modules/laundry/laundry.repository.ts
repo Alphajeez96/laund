@@ -19,6 +19,13 @@ const findByWhatsappNumber = async (whatsappNumber: string) => {
   });
 };
 
+const findByAppId = async (appId: string) => {
+  return prisma.laundry.findFirst({
+    where: {appId},
+    select: {id: true, appId: true},
+  });
+};
+
 const updateLaundry = async (
   id: string,
   data: {name?: string; whatsappNumber?: string},
@@ -31,7 +38,8 @@ const updateLaundry = async (
 
 export const LaundryRepository = {
   existsById,
+  findByAppId,
   createLaundry,
-  findByWhatsappNumber,
   updateLaundry,
+  findByWhatsappNumber,
 };
