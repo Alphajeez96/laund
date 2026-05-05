@@ -8,7 +8,7 @@ export const setSubscription = async (data: {name: string; appId: string}) => {
     url: config.gupshup.webhookUrl,
     version: config.gupshup.apiVersion,
     modes:
-      "MESSAGE,ENQUEUED,SENT,DELIVERED,READ,FAILED,DELETED,ACCOUNT,TEMPLATE,OTHERS",
+      "MESSAGE,ENQUEUED,SENT,DELIVERED,READ,FAILED,DELETED,ACCOUNT,TEMPLATE,FLOWS_MESSAGE,OTHERS",
   };
 
   const response = await requestJson<{status: string; appId: string}>(
