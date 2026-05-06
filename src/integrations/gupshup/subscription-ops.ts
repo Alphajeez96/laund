@@ -1,5 +1,5 @@
 import config from "@/config/config";
-import {requestJson} from "@/utils/catch-async";
+import {requestAppJson} from "@/utils/catch-async";
 
 export const setSubscription = async (data: {name: string; appId: string}) => {
   const payload = {
@@ -16,26 +16,26 @@ export const setSubscription = async (data: {name: string; appId: string}) => {
     }),
   };
 
-  const response = await requestJson<{status: string; appId: string}>(
+  const response = await requestAppJson<{status: string}>(
+    data.appId,
     `app/${data.appId}/subscription`,
     {
       method: "POST",
       context: "set subscription",
       body: new URLSearchParams(payload),
     },
-    "Authorization",
   );
 
   return response;
 };
 
 export const deleteSubscriptions = async (appId: string) => {
-  await requestJson<{status: string; appId: string}>(
+  await requestAppJson<{status: string}>(
+    appId,
     `app/${appId}/subscription`,
     {
       method: "DELETE",
       context: "Delete subscriptions",
     },
-    "Authorization",
   );
 };

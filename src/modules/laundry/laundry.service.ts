@@ -19,6 +19,13 @@ const createLaundry = async (data: ICreateLaundry) => {
   }
 
   const {appId = ""} = await createApp(name);
+
+  //getAppAccessToken
+  // setwebhook
+  // call gupshup update contact endpoint -> we should be updating just contactEmail now
+  // generate empbed link,
+  // wait for webhook and then push wabaId, namespace and co to DB
+
   return LaundryRepository.createLaundry({...data, appId});
 };
 

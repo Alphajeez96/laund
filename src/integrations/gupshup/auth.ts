@@ -1,9 +1,12 @@
 import config from "@/config/config";
+import type {PartnerLoginResponse, PartnerAppTokenResponse} from "./types";
+
 import {requestJson} from "@/utils/catch-async";
-import {type PartnerAppTokenResponse, type PartnerLoginResponse} from "./types";
 
 const FALLBACK_CACHE_MS = 23 * 60 * 60 * 1000;
 let cache: {token: string; expiresAtMs: number} | null = null;
+let appTokenCache: Map<string, {token: string; expiresAtMs: number}> | null =
+  null;
 
 const ttlMsFromJwt = (token: string): number | null => {
   const parts = token.split(".");
@@ -58,10 +61,18 @@ export function clearPartnerTokenCache(): void {
 export const getAppAccessToken = async (appId: string): Promise<string> => {
   if (!appId) throw new Error("appId is required");
 
+  const now = Date.now();
+  if (!appTokenCache) appTokenCache = new Map();
+  const cached = appTokenCache.get(appId);
+  if (cached && now < cached.expiresAtMs) return cached.token;
+
+  const partnerToken = await getPartnerAccessToken();
   const parsed = await requestJson<PartnerAppTokenResponse>(
     `app/${encodeURIComponent(appId)}/token`,
-    {context: "partner app token"},
-    "Authorization",
+    {
+      context: "partner app token",
+      headers: {Authorization: partnerToken},
+    },
   );
 
   const appToken = parsed.token?.token;
@@ -70,5 +81,10 @@ export const getAppAccessToken = async (appId: string): Promise<string> => {
       `partner app token missing in response: ${JSON.stringify(parsed).slice(0, 240)}`,
     );
   }
+
+  appTokenCache.set(appId, {
+    token: appToken,
+    expiresAtMs: now + FALLBACK_CACHE_MS,
+  });
   return appToken;
 };

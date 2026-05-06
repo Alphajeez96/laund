@@ -129,6 +129,7 @@ type IngestInput = {
 const handleV3 = async (body: GupshupV3WebhookBody) => {
   const appId = body.gs_app_id;
 
+  console.log("handleV3:::", body);
   const laundry = await LaundryRepository.findByAppId(appId);
   if (!laundry) {
     console.warn("[gupshup-webhook] no laundry for gs_app_id", appId);

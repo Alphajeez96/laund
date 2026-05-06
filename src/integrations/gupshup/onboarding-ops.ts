@@ -1,5 +1,4 @@
-import {getPartnerAccessToken} from "./auth";
-import {requestJson} from "@/utils/catch-async";
+import {requestPartnerJson} from "@/utils/catch-async";
 import {type PartnerAppTokenResponse} from "./types";
 
 type ContactDetails = {
@@ -21,26 +20,29 @@ export const createApp = async (name: string) => {
     name,
     templateMessaging: "true",
   });
-  const parsed = await requestJson<{status: string; appId: string}>("app", {
-    method: "POST",
-    context: "Create App",
-    body,
-  });
+  const parsed = await requestPartnerJson<{status: string; appId: string}>(
+    "app",
+    {
+      method: "POST",
+      context: "Create App",
+      body,
+    },
+  );
 
   return parsed;
 };
 
 export const getAppDetails = async (appId: string) => {
-  const details = await requestJson<PartnerAppTokenResponse>(
+  const details = await requestPartnerJson<PartnerAppTokenResponse>(
     `app/${appId}/details`,
-    {context: "partner app token"},
+    {context: "get app details"},
   );
 
   return details;
 };
 
 export const setContactDetails = async (data: ContactDetails) => {
-  const response = await requestJson<{status: string; appId: string}>(
+  const response = await requestPartnerJson<{status: string; appId: string}>(
     `app/${data.appId}/onboarding/contact`,
     {
       method: "PUT",
@@ -54,7 +56,7 @@ export const setContactDetails = async (data: ContactDetails) => {
 
 export const generateEmbedLink = async (data: IGenerateEmbed) => {
   const {appId, user, lang, regenerate} = data;
-  const response = await requestJson<{status: string; link: string}>(
+  const response = await requestPartnerJson<{status: string; link: string}>(
     `app/${appId}/onboarding/embed/link?regenerate=${regenerate}&user=${user}&lang=${lang}`,
     {context: "generate embed link"},
   );
@@ -63,7 +65,7 @@ export const generateEmbedLink = async (data: IGenerateEmbed) => {
 };
 
 export const resendEmbedLink = async (appId: string) => {
-  await requestJson(`app/${appId}/onboarding/contact/email/resend`, {
+  await requestPartnerJson(`app/${appId}/onboarding/contact/email/resend`, {
     method: "POST",
     context: "resend embed link",
   });

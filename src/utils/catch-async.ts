@@ -2,7 +2,10 @@ import httpStatus from "http-status";
 import ApiError from "./api-error";
 import config from "@/config/config";
 import {type Request, type Response} from "express";
-import {getPartnerAccessToken} from "@/integrations/gupshup/auth";
+import {
+  getAppAccessToken,
+  getPartnerAccessToken,
+} from "@/integrations/gupshup/auth";
 
 const GUPSHUP_BASE_URL = config.gupshup.baseUrl;
 
@@ -62,15 +65,9 @@ const buildRequestBody = (
 export const requestJson = async <T extends ExternalApiEnvelope>(
   url: string,
   options: ApiClientOptions,
-  authHeader?: AuthHeader,
 ): Promise<T> => {
-  const isAuth = url.includes("account/login");
   const {context, method = "GET", headers, body, ...rest} = options;
-
-  const finalHeaders = new Headers({
-    ...headers,
-    ...(!isAuth && {[authHeader ?? "token"]: await getPartnerAccessToken()}),
-  });
+  const finalHeaders = new Headers(headers);
 
   if (!finalHeaders.has("Accept")) {
     finalHeaders.set("Accept", "application/json");
@@ -88,14 +85,37 @@ export const requestJson = async <T extends ExternalApiEnvelope>(
 
   const raw = await res.text();
   const parsed = JSON.parse(raw);
-
   if (!res.ok || parsed.status === "error") {
     throw new Error(
       `${context} failed: ${res.status} ${parsed.message ?? raw.slice(0, 200)}`,
     );
   }
 
-  return parsed;
+  return parsed as T;
+};
+
+export const requestPartnerJson = async <T extends ExternalApiEnvelope>(
+  path: string,
+  options: ApiClientOptions,
+): Promise<T> => {
+  const partnerToken = await getPartnerAccessToken();
+  const h = new Headers(options.headers);
+  h.set("token", partnerToken);
+
+  return requestJson<T>(path, {...options, headers: h});
+};
+
+export const requestAppJson = async <T extends ExternalApiEnvelope>(
+  appId: string,
+  path: string,
+  options: ApiClientOptions,
+  authHeader: AuthHeader = "Authorization",
+): Promise<T> => {
+  const appToken = await getAppAccessToken(appId);
+  const h = new Headers(options.headers);
+  h.set(authHeader, appToken);
+
+  return requestJson<T>(path, {...options, headers: h});
 };
 
 const catchAsync = (handler: ControllerFn) => {
