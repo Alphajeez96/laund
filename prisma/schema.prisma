@@ -36,10 +36,10 @@ model Laundry {
   email          String?
   name           String        @db.VarChar(100)
   whatsappNumber String        @unique
-  contactName    String
+  contactName    String?
   contactNumber  String?
-  wabaId         String
-  namespace      String
+  wabaId         String?
+  namespace      String?
   status         LaundryStatus @default(sandbox)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt

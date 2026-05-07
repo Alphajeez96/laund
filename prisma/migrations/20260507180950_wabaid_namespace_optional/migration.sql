@@ -1,0 +1,3 @@
+-- AlterTable
+ALTER TABLE "Laundry" ALTER COLUMN "namespace" DROP NOT NULL,
+ALTER COLUMN "wabaId" DROP NOT NULL;
