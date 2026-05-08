@@ -32,7 +32,7 @@ enum LaundryStatus {
 
 model Laundry {
   id             String        @id @default(uuid()) @db.Uuid
-  appId          String
+  appId          String        @unique
   email          String?
   name           String        @db.VarChar(100)
   whatsappNumber String        @unique
