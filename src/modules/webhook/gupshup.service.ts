@@ -8,6 +8,7 @@ import {
   type GupshupSystemEventBody,
   type GupshupV3WebhookBody,
 } from "./gupshup.types";
+import {LaundryService} from "../laundry/laundry.service";
 
 type IngestInput = {
   receivedAtMs: number;
@@ -95,7 +96,7 @@ type IngestInput = {
 //     return;
 //   }
 
-//   const laundry = await LaundryRepository.findByAppId(appId);
+// const laundry = await LaundryRepository.existsById({appId});
 //   if (!laundry) {
 //     console.warn("[gupshup-webhook] no laundry for system event appId", appId);
 //     return;
@@ -129,15 +130,28 @@ type IngestInput = {
 const handleV3 = async (body: GupshupV3WebhookBody) => {
   const appId = body.gs_app_id;
 
-  console.log("handleV3:::", body);
-  const laundry = await LaundryRepository.findByAppId(appId);
+  const laundry = await LaundryRepository.existsById({appId});
   if (!laundry) {
     console.warn("[gupshup-webhook] no laundry for gs_app_id", appId);
     return;
   }
 
   for (const entry of body.entry ?? []) {
+    console.log("BODY_ENTRY:::", entry);
     for (const change of entry.changes ?? []) {
+      console.log("ENTRY_CHANGE:::", change);
+
+      // ONBOARDING EVENT HERE
+      if (
+        change.field === "account-event" &&
+        change?.value?.payload?.status === "ACCOUNT_VERIFIED"
+      ) {
+        LaundryService.updateLaundry(
+          {appId},
+          {status: "live", wabaId: entry.id},
+        );
+      }
+
       if (change.field !== "messages") continue;
 
       const value = change.value;

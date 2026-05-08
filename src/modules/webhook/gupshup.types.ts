@@ -13,6 +13,8 @@ export interface GupshupV3WebhookBody {
           phone_number_id?: string;
         };
 
+        payload: {status: string};
+
         contacts?: Array<{
           profile?: {name?: string};
           wa_id?: string;

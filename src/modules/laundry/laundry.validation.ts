@@ -1,5 +1,6 @@
 import {z} from "zod";
 import {isValidPhoneNumber} from "libphonenumber-js";
+import {LaundryStatus} from "generated/prisma/enums";
 
 export const getLaundryParamsSchema = z.object({
   params: z.object({
@@ -33,9 +34,17 @@ export const updateLaundrySchema = z.object({
         .string()
         .refine((v) => isValidPhoneNumber(v), "Invalid phone number")
         .optional(),
+      namespace: z.string().optional(),
+      status: z.enum(LaundryStatus).optional(),
+      wabaId: z.string().optional(),
+      contactName: z.string().optional(),
+      contactNumber: z
+        .string()
+        .refine((v) => isValidPhoneNumber(v), "Invalid phone number")
+        .optional(),
     })
-    .refine((b) => b.name !== undefined || b.whatsappNumber !== undefined, {
-      message: "At least one field is required",
+    .refine((b) => Object.values(b).some((v) => v !== undefined), {
+      message: "At least one field must be provided",
     }),
 });
 

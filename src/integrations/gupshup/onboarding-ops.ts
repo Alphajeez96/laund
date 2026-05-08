@@ -11,8 +11,8 @@ type ContactDetails = {
 type IGenerateEmbed = {
   appId: string;
   user: string;
-  lang: string;
-  regenerate: boolean;
+  lang?: string;
+  regenerate?: boolean;
 };
 
 export const createApp = async (name: string) => {
@@ -20,7 +20,7 @@ export const createApp = async (name: string) => {
     name,
     templateMessaging: "true",
   });
-  const parsed = await requestPartnerJson<{status: string; appId: string}>(
+  const response = await requestPartnerJson<{status: string; appId: string}>(
     "app",
     {
       method: "POST",
@@ -29,7 +29,7 @@ export const createApp = async (name: string) => {
     },
   );
 
-  return parsed;
+  return response;
 };
 
 export const getAppDetails = async (appId: string) => {
@@ -42,12 +42,13 @@ export const getAppDetails = async (appId: string) => {
 };
 
 export const setContactDetails = async (data: ContactDetails) => {
+  const {appId, ...rest} = data;
   const response = await requestPartnerJson<{status: string; appId: string}>(
-    `app/${data.appId}/onboarding/contact`,
+    `app/${appId}/onboarding/contact`,
     {
       method: "PUT",
       context: "set contact details",
-      body: new URLSearchParams(data),
+      body: new URLSearchParams(rest),
     },
   );
 
@@ -55,7 +56,7 @@ export const setContactDetails = async (data: ContactDetails) => {
 };
 
 export const generateEmbedLink = async (data: IGenerateEmbed) => {
-  const {appId, user, lang, regenerate} = data;
+  const {appId, user, lang = "English", regenerate = "true"} = data;
   const response = await requestPartnerJson<{status: string; link: string}>(
     `app/${appId}/onboarding/embed/link?regenerate=${regenerate}&user=${user}&lang=${lang}`,
     {context: "generate embed link"},

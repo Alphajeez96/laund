@@ -4,7 +4,7 @@ import {requestAppJson} from "@/utils/catch-async";
 export const setSubscription = async (data: {name: string; appId: string}) => {
   const payload = {
     showOnUI: "true",
-    tag: `nmtg${data.name}`,
+    tag: `nmtg-${data.name}`,
     url: config.gupshup.webhookUrl,
     version: config.gupshup.apiVersion,
     modes:
@@ -30,12 +30,8 @@ export const setSubscription = async (data: {name: string; appId: string}) => {
 };
 
 export const deleteSubscriptions = async (appId: string) => {
-  await requestAppJson<{status: string}>(
-    appId,
-    `app/${appId}/subscription`,
-    {
-      method: "DELETE",
-      context: "Delete subscriptions",
-    },
-  );
+  await requestAppJson<{status: string}>(appId, `app/${appId}/subscription`, {
+    method: "DELETE",
+    context: "Delete subscriptions",
+  });
 };

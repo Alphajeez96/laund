@@ -1,8 +1,15 @@
 import httpStatus from "http-status";
 import ApiError from "@/utils/api-error";
-import {createApp} from "@/integrations/gupshup/onboarding-ops";
+import {
+  createApp,
+  generateEmbedLink,
+  setContactDetails,
+} from "@/integrations/gupshup/onboarding-ops";
 import {LaundryRepository} from "../laundry/laundry.repository";
+import {setSubscription} from "@/integrations/gupshup/subscription-ops";
 import {type ICreateLaundry, type IUpdateLaundry} from "./laundry.validation";
+
+type LaundryLookup = Parameters<typeof LaundryRepository.existsById>[0];
 
 const getLaundry = async (id: string) => {
   const laundry = await LaundryRepository.existsById({id, full: true});
@@ -11,14 +18,20 @@ const getLaundry = async (id: string) => {
 };
 
 const createLaundry = async (data: ICreateLaundry) => {
-  const {whatsappNumber, name} = data;
+  const {whatsappNumber, name: rawName, email} = data;
   const itExists = await LaundryRepository.findByWhatsappNumber(whatsappNumber);
 
   if (itExists) {
     throw new ApiError(httpStatus.CONFLICT, "Laundry already exists");
   }
 
+  const name = rawName.replace(/\s+/g, "");
+
   const {appId = ""} = await createApp(name);
+  await setSubscription({name, appId});
+  const {link = ""} = await generateEmbedLink({user: name, appId});
+  console.log("RESP::GENERATED-LINK::", link);
+  // send link to user via chat?
 
   //getAppAccessToken
   // setwebhook
@@ -29,8 +42,8 @@ const createLaundry = async (data: ICreateLaundry) => {
   return LaundryRepository.createLaundry({...data, appId});
 };
 
-const updateLaundry = async (id: string, data: IUpdateLaundry) => {
-  const existing = await LaundryRepository.existsById({id, full: true});
+const updateLaundry = async (lookup: LaundryLookup, data: IUpdateLaundry) => {
+  const existing = await LaundryRepository.existsById({...lookup, full: true});
   if (!existing) {
     throw new ApiError(httpStatus.NOT_FOUND, "Laundry not found");
   }
@@ -47,7 +60,7 @@ const updateLaundry = async (id: string, data: IUpdateLaundry) => {
     }
   }
 
-  return LaundryRepository.updateLaundry(id, data);
+  return LaundryRepository.updateLaundry(existing.id, data);
 };
 
 export const LaundryService = {

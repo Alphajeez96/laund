@@ -33,7 +33,7 @@ const updateLaundry = catchAsync(async (req) => {
     laundrySchema.updateLaundrySchema,
     req,
   );
-  const laundry = await LaundryService.updateLaundry(params.id, data);
+  const laundry = await LaundryService.updateLaundry({id: params.id}, data);
 
   return {
     data: laundry,
