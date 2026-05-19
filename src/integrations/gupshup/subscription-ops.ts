@@ -9,6 +9,7 @@ export const setSubscription = async (data: {name: string; appId: string}) => {
     version: config.gupshup.apiVersion,
     modes:
       "MESSAGE,ENQUEUED,SENT,DELIVERED,READ,FAILED,DELETED,ACCOUNT,TEMPLATE,FLOWS_MESSAGE,OTHERS",
+    //MESSAGE mode should only be added if we need to receive hooks for inbounds to the app
     meta: JSON.stringify({
       headers: {
         "x-gupshup-webhook-secret": config.gupshup.webhookSecret!,

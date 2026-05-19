@@ -1,4 +1,4 @@
-import {requestPartnerJson} from "@/utils/catch-async";
+import {requestPartnerJson, requestAppJson} from "@/utils/catch-async";
 import {type PartnerAppTokenResponse} from "./types";
 
 type ContactDetails = {
@@ -71,3 +71,18 @@ export const resendEmbedLink = async (appId: string) => {
     context: "resend embed link",
   });
 };
+
+export const getappWABAInfo = async (appId: string) => {
+  await requestAppJson(
+    appId,
+    `app/${appId}/waba/info`,
+    {context: "get WABA info"},
+    "token",
+  );
+};
+
+// curl -X POST 'https://5f16-102-90-80-244.ngrok-free.app/v1/laundry' \
+//   -H 'Content-Type: application/json' \
+//   -H 'Accept: application/json' \
+//   --data-raw '{"name":"Ezar by Didiya","email":"prince@mydidiya.com","whatsappNumber":"+2349110281534"}' \
+//   -w '\n'

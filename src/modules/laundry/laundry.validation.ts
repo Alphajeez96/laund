@@ -10,7 +10,7 @@ export const getLaundryParamsSchema = z.object({
 
 export const createLaundrySchema = z.object({
   body: z.object({
-    name: z.string().min(1, "Name is required").max(100),
+    name: z.string().min(6, "Name is required").max(100),
     email: z.email(),
     whatsappNumber: z
       .string()

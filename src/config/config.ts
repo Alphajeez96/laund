@@ -3,6 +3,7 @@ import "dotenv/config";
 
 const envSchema = z.object({
   DATABASE_URL: z.string().min(1),
+  RESIDENT_APP_ID: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(3000),
   NODE_ENV: z
     .enum(["development", "production", "test"])
@@ -21,6 +22,7 @@ export default {
   port: env.PORT,
   env: env.NODE_ENV,
   databaseUrl: env.DATABASE_URL,
+  residentAppId: env.RESIDENT_APP_ID,
   gupshup: {
     baseUrl: env.GUPSHUP_BASE_URL,
     webhookUrl: env.GUPSHUP_WEBHOOK_URL,
