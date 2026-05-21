@@ -20,7 +20,6 @@ const existsById = async (args: LaundryLookup) => {
 const findByWhatsappNumber = async (whatsappNumber: string) => {
   return prisma.laundry.findUnique({
     where: {whatsappNumber},
-    select: {id: true},
   });
 };
 

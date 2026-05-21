@@ -1,3 +1,5 @@
+import config from "@/config/config";
+import ollama from "ollama";
 import {LaundryRepository} from "@/modules/laundry/laundry.repository";
 import {CustomerRepository} from "@/modules/customer/customer.repository";
 import {OrderRepository} from "@/modules/order/order.repository";
@@ -9,6 +11,8 @@ import {
   type GupshupV3WebhookBody,
 } from "./gupshup.types";
 import {LaundryService} from "../laundry/laundry.service";
+import {inboundWaFromToE164} from "@/utils/phone";
+import intents from "@/lib/intents";
 
 type IngestInput = {
   receivedAtMs: number;
@@ -46,47 +50,67 @@ type IngestInput = {
 //   return items;
 // };
 
-// const handleIncomingTextMessage = async (args: {
-//   laundryId: string;
-//   from: string;
-//   contactName?: string;
-//   text: string;
-// }) => {
-//   const fromE164 = normalizePhone(args.from);
-//   if (!fromE164) return;
+const handleIncomingTextMessage = async (args: {
+  from: string;
+  text: string;
+  contactName?: string;
+}) => {
+  // check if laundry exists, else send a help form to register.
+  // parse message
 
-//   // Find-or-create customer (unique is (laundryId, phoneNumber) in schema).
-//   let customer = await CustomerRepository.findByLaundryAndPhoneNumber(
-//     args.laundryId,
-//     fromE164,
-//   );
+  const landryExists = await LaundryRepository.findByWhatsappNumber(
+    inboundWaFromToE164(args.from),
+  );
 
-//   if (!customer) {
-//     customer = await CustomerRepository.createCustomer({
-//       laundryId: args.laundryId,
-//       phoneNumber: fromE164,
-//       name: args.contactName,
-//     });
-//   }
+  if (!landryExists) {
+    // send signup process.
+  }
 
-//   // Create an order (must have >= 1 item in current validation).
-//   const parsedItems = parseOrderItems(args.text);
-//   const orderItems =
-//     parsedItems.length > 0
-//       ? parsedItems
-//       : [{itemName: args.text.slice(0, 500), quantity: 1}];
+  const response = await ollama.chat({
+    model: config.activeLLM,
+    messages: [
+      {
+        role: "system",
+        content:
+          "You are a helpful assistant. Classify the user intent using the available tools, and structure the JSON parameters exactly according to the tool description.",
+      },
+      {role: "user", content: args.text},
+    ],
+    format: "json",
+  });
 
-//   const order = await OrderRepository.createOrder({
-//     laundryId: args.laundryId,
-//     customerId: customer.id,
-//     orderItems,
-//   });
+  console.log("LLM RESP::");
+  console.dir(response.message.content, {depth: null});
 
-//   // Optional: confirmation message (your MessagingService is currently a stub).
-//   await MessagingService.sendText(fromE164, `Order received: ${order.id}`);
-
-//   return order;
-// };
+  // const fromE164 = normalizePhone(args.from);
+  // if (!fromE164) return;
+  // // Find-or-create customer (unique is (laundryId, phoneNumber) in schema).
+  // let customer = await CustomerRepository.findByLaundryAndPhoneNumber(
+  //   args.laundryId,
+  //   fromE164,
+  // );
+  // if (!customer) {
+  //   customer = await CustomerRepository.createCustomer({
+  //     laundryId: args.laundryId,
+  //     phoneNumber: fromE164,
+  //     name: args.contactName,
+  //   });
+  // }
+  // // Create an order (must have >= 1 item in current validation).
+  // const parsedItems = parseOrderItems(args.text);
+  // const orderItems =
+  //   parsedItems.length > 0
+  //     ? parsedItems
+  //     : [{itemName: args.text.slice(0, 500), quantity: 1}];
+  // const order = await OrderRepository.createOrder({
+  //   laundryId: args.laundryId,
+  //   customerId: customer.id,
+  //   orderItems,
+  // });
+  // // Optional: confirmation message (your MessagingService is currently a stub).
+  // await MessagingService.sendText(fromE164, `Order received: ${order.id}`);
+  // return order;
+};
 
 // const handleSystemEvent = async (body: GupshupSystemEventBody) => {
 //   // System events may come in as V2-style payloads, and include appId. ([partner-docs.gupshup.io](https://partner-docs.gupshup.io/docs/system-events))
@@ -141,7 +165,7 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
     for (const change of entry.changes ?? []) {
       console.log("ENTRY_CHANGE:::", change);
 
-      // ONBOARDING EVENT HERE
+      // META ONBOARDING EVENT HERE
       if (
         change.field === "account-event" &&
         change?.value?.payload?.status === "ACCOUNT_VERIFIED"
@@ -152,22 +176,30 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
         );
       }
 
-      if (change.field !== "messages") continue;
+      if (appId === config.residentAppId)
+        if (change.field !== "messages") continue;
+
+      console.log("BODY_ENTRY 2::");
+      console.dir(entry, {depth: null});
+      console.log("ENTRY_CHANGE 2::");
+      console.dir(change, {depth: null});
 
       const value = change.value;
 
       // Inbound messages (V3). ([partner-docs.gupshup.io](https://partner-docs.gupshup.io/docs/set-callback-url-1))
+
+      // WE NEED TO GET THE FROM CONTACT HERE THAT WOUKD BE THE LAUNDRY.
       const contactName = value?.contacts?.[0]?.profile?.name;
-      // for (const msg of value?.messages ?? []) {
-      //   if (msg.type === "text" && msg.text?.body && msg.from) {
-      //     await handleIncomingTextMessage({
-      //       laundryId: laundry.id,
-      //       from: msg.from,
-      //       contactName,
-      //       text: msg.text.body,
-      //     });
-      //   }
-      // }
+      for (const msg of value?.messages ?? []) {
+        if (msg.type === "text" && msg.text?.body && msg.from) {
+          await handleIncomingTextMessage({
+            contactName,
+            // from: msg.from,
+            from: "2348030000011",
+            text: msg.text.body,
+          });
+        }
+      }
 
       // Status updates (V3). ([partner-docs.gupshup.io](https://partner-docs.gupshup.io/docs/set-callback-url-1))
       // for (const st of value?.statuses ?? []) {
@@ -201,3 +233,7 @@ const ingest = async ({body}: IngestInput) => {
 };
 
 export const GupshupWebhookService = {ingest};
+
+// intent: "create_order" | "send_reminder" | "financial_report" | ...
+// entities: { customerPhone, pickupDate, items, amount, ... }
+// confidence + clarifyingQuestion when uncertain

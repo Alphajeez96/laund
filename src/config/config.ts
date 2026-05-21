@@ -2,6 +2,7 @@ import {z} from "zod";
 import "dotenv/config";
 
 const envSchema = z.object({
+  ACTIVE_LLM: z.string().min(1),
   DATABASE_URL: z.string().min(1),
   RESIDENT_APP_ID: z.string().min(1),
   PORT: z.coerce.number().int().positive().default(3000),
@@ -21,6 +22,7 @@ const env = envSchema.parse(process.env);
 export default {
   port: env.PORT,
   env: env.NODE_ENV,
+  activeLLM: env.ACTIVE_LLM,
   databaseUrl: env.DATABASE_URL,
   residentAppId: env.RESIDENT_APP_ID,
   gupshup: {
