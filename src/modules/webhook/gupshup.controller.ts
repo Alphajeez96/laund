@@ -1,5 +1,6 @@
 import type {Request, Response} from "express";
 import config from "@/config/config";
+import logger from "@/utils/logger";
 import {GupshupWebhookService} from "./gupshup.service";
 
 const handle = (req: Request, res: Response) => {
@@ -17,7 +18,7 @@ const handle = (req: Request, res: Response) => {
 
   res.status(204).end();
 
-  console.info("WEBHOOK GOTTEN:::", req.body);
+  logger("WEBHOOK GOTTEN", req.body);
   // Process after ACK (never await inside the request).
   setImmediate(() => {
     void GupshupWebhookService.ingest({
