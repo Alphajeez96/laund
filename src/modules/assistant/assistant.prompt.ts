@@ -1,5 +1,8 @@
 import {ASSISTANT_INTENTS} from "./assistant.validation";
 
+// we need to add a new intent to check if it's a greeting then decipher what to do
+// also xara seems to immediately show like a typing view, how do we do that?
+
 export const buildSystemPrompt = (todayIsoDate: string): string => {
   const tomorrowIsoDate = (() => {
     // todayIsoDate is YYYY-MM-DD

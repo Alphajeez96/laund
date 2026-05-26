@@ -1,0 +1,98 @@
+{
+  "version": "7.3",
+  "screens": [
+    {
+      "id": "BUSINESS_ONBOARDING",
+      "title": "Create Account",
+      "terminal": true,
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Business Details"
+          },
+          {
+            "type": "TextBody",
+            "text": "Tell us about your laundry so we can have you set up"
+          },
+          {
+            "type": "Form",
+            "name": "signup_form",
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "laundry_name",
+                "label": "Business Name",
+                "input-type": "text",
+                "required": true,
+                "min-chars": 2,
+                "max-chars": 100
+              },
+              {
+                "type": "TextInput",
+                "name": "contact_email",
+                "label": "Email",
+                "input-type": "email",
+                "required": false
+              },
+              {
+                "type": "TextInput",
+                "name": "contact_number",
+                "label": "Phone",
+                "input-type": "phone",
+                "required": true,
+                "helper-text": "Laundry's contact (e.g. 08102...)"
+              },
+              {
+                "type": "OptIn",
+                "name": "terms_accepted",
+                "label": "I agree to the Terms of use and Privacy policy",
+                "required": true,
+                "on-click-action": {
+                  "name": "navigate",
+                  "next": {
+                    "type": "screen",
+                    "name": "TERMS_AND_PRIVACY"
+                  },
+                  "payload": {}
+                }
+              },
+              {
+                "type": "Footer",
+                "label": "Submit",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "laundry_name": "${form.laundry_name}",
+                    "contact_email": "${form.contact_email}",
+                    "contact_number": "${form.contact_number}",
+                    "terms_accepted": "${form.terms_accepted}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "TERMS_AND_PRIVACY",
+      "title": "Terms & Privacy",
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Terms of Use & Privacy Policy"
+          },
+          {
+            "type": "TextBody",
+            "text": "**Terms of Use**\n\nBy using LaundryOps, you agree to the following terms:\n\n1. **Service Description** — LaundryOps provides an automation platform for laundry businesses.\n2. **Account Registration** — You must provide accurate business and contact information.\n3. **User Responsibilities** — You are responsible for maintaining the confidentiality of your account credentials.\n4. **Acceptable Use** — You agree not to misuse the platform for any unlawful purpose.\n5. **Limitation of Liability** — LaundryOps shall not be liable for any indirect or consequential damages.\n\n---\n\n**Privacy Policy**\n\nYour privacy is important to us. This policy outlines how we collect, use, and protect your information.\n\n1. **Information We Collect** — We collect business details (name, email, phone) necessary for service delivery.\n2. **How We Use Your Data** — Your data is used solely to provide, maintain, and improve our services.\n3. **Data Sharing** — We do not sell your personal data to third parties.\n4. **Data Security** — We implement industry-standard security measures to protect your information.\n5. **Contact Us** — For privacy-related inquiries, contact privacy@laundryops.com",
+            "markdown": true
+          }
+        ]
+      }
+    }
+  ]
+}

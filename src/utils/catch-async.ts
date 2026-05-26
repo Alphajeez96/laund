@@ -19,11 +19,6 @@ interface APIResponse<T> {
 
 type AuthHeader = "token" | "Authorization";
 
-type ExternalApiEnvelope = {
-  status?: string;
-  message?: string;
-};
-
 type ApiClientOptions = RequestInit & {
   context: string;
 };
@@ -62,7 +57,7 @@ const buildRequestBody = (
   return body;
 };
 
-export const requestJson = async <T extends ExternalApiEnvelope>(
+export const requestJson = async <T>(
   url: string,
   options: ApiClientOptions,
 ): Promise<T> => {
@@ -94,7 +89,7 @@ export const requestJson = async <T extends ExternalApiEnvelope>(
   return parsed as T;
 };
 
-export const requestPartnerJson = async <T extends ExternalApiEnvelope>(
+export const requestPartnerJson = async <T>(
   path: string,
   options: ApiClientOptions,
 ): Promise<T> => {
@@ -105,7 +100,7 @@ export const requestPartnerJson = async <T extends ExternalApiEnvelope>(
   return requestJson<T>(path, {...options, headers: h});
 };
 
-export const requestAppJson = async <T extends ExternalApiEnvelope>(
+export const requestAppJson = async <T>(
   appId: string,
   path: string,
   options: ApiClientOptions,
