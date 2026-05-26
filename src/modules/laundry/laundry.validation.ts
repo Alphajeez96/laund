@@ -19,7 +19,7 @@ export const createLaundrySchema = z.object({
 });
 
 export type ICreateLaundry = z.infer<typeof createLaundrySchema>["body"] & {
-  appId: string;
+  appId?: string;
 };
 
 export const updateLaundrySchema = z.object({
