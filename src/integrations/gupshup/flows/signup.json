@@ -5,6 +5,20 @@
       "id": "BUSINESS_ONBOARDING",
       "title": "Create Account",
       "terminal": true,
+      "data": {
+        "laundry_name": {
+          "type": "string",
+          "__example__": ""
+        },
+        "contact_email": {
+          "type": "string",
+          "__example__": ""
+        },
+        "contact_number": {
+          "type": "string",
+          "__example__": ""
+        }
+      },
       "layout": {
         "type": "SingleColumnLayout",
         "children": [
@@ -19,6 +33,11 @@
           {
             "type": "Form",
             "name": "signup_form",
+            "init-values": {
+              "laundry_name": "${data.laundry_name}",
+              "contact_email": "${data.contact_email}",
+              "contact_number": "${data.contact_number}"
+            },
             "children": [
               {
                 "type": "TextInput",
@@ -42,7 +61,7 @@
                 "label": "Phone",
                 "input-type": "phone",
                 "required": true,
-                "helper-text": "Laundry's contact without the 0 (e.g. 8102...)"
+                "helper-text": "Laundry's contact (e.g. 08102...)"
               },
               {
                 "type": "OptIn",
