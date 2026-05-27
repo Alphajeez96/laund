@@ -24,9 +24,9 @@ export type AssistantExecutionResult = {
 };
 
 type AssistantContext = {
-  laundry: {id: string; name: string; appId: string; whatsappNumber: string};
-  fromE164: string;
   text: string;
+  fromE164: string;
+  laundry: {id: string; name: string; whatsappNumber: string};
 };
 
 function isIsoDate(v: string): boolean {

@@ -8,10 +8,11 @@ import {
   type GupshupV3WebhookBody,
 } from "./gupshup.types";
 import {LaundryService} from "../laundry/laundry.service";
-import {inboundWaFromToE164} from "@/utils/phone";
+import {MessagingService} from "../messaging/messaging.service";
+import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
+import {inboundWaFromToE164, toNationalDigits} from "@/utils/phone";
 import {interpretMessage} from "@/modules/assistant/assistant.service";
 import {executeAssistantIntent} from "@/modules/assistant/assistant.router";
-import {MessagingService} from "../messaging/messaging.service";
 
 type IngestInput = {
   receivedAtMs: number;
@@ -20,16 +21,6 @@ type IngestInput = {
 };
 
 // type IngestInput = GupshupV3WebhookBody | GupshupSystemEventBody;
-
-// const normalizePhone = (raw?: string): string | null => {
-//   if (!raw) return null;
-//   const v = String(raw).trim();
-//   if (!v) return null;
-//   if (v.startsWith("+")) return v;
-//   // Gupshup samples show numbers without '+', e.g. "9199..." ([partner-docs.gupshup.io](https://partner-docs.gupshup.io/docs/set-callback-url-1))
-//   if (/^\d+$/.test(v)) return `+${v}`;
-//   return v;
-// };
 
 // const parseOrderItems = (
 //   text: string,
@@ -61,8 +52,21 @@ const handleIncomingTextMessage = async (args: {
   const laundry = await LaundryRepository.findByWhatsappNumber(fromE164);
 
   if (!laundry) {
-    // send signup process.
-    return;
+    const payload = {
+      to: fromE164,
+      cta: "Get started",
+      appId: config.residentAppId,
+      flowId: FLOW_CONFIG.SIGN_UP.id,
+      screen: FLOW_CONFIG.SIGN_UP.screen,
+      body: "xxx is your go to xxxxsxxx",
+      header: `Hi ${args?.contactName ?? "Champ"}!`,
+      screenData: {
+        laundry_name: args?.contactName ?? "",
+        contact_number: toNationalDigits(fromE164),
+      },
+    };
+
+    return await MessagingService.sendFlow(payload);
   }
 
   const envelope = await interpretMessage(args.text);
