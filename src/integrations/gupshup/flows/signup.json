@@ -42,7 +42,7 @@
                 "label": "Phone",
                 "input-type": "phone",
                 "required": true,
-                "helper-text": "Laundry's contact (e.g. 08102...)"
+                "helper-text": "Laundry's contact without the 0 (e.g. 8102...)"
               },
               {
                 "type": "OptIn",
