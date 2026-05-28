@@ -11,7 +11,8 @@ export const getLaundryParamsSchema = z.object({
 export const createLaundrySchema = z.object({
   body: z.object({
     name: z.string().min(6, "Name is required").max(100),
-    email: z.email(),
+    email: z.email().optional(),
+    status: z.enum(LaundryStatus).optional(),
     whatsappNumber: z
       .string()
       .refine((v) => isValidPhoneNumber(v), "Invalid phone number"),

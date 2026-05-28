@@ -1,4 +1,4 @@
-import {parsePhoneNumberFromString} from "libphonenumber-js";
+import {parsePhoneNumberFromString, type CountryCode} from "libphonenumber-js";
 
 /** Normalize to E.164 for matching against `Laundry.whatsappNumber`. */
 export const toE164 = (raw: string): string => {
@@ -7,6 +7,20 @@ export const toE164 = (raw: string): string => {
     return parsed.format("E.164");
   }
   return raw.trim();
+};
+
+/** Normalize a local number (e.g. 080...) to E.164 */
+export const toLocalE164 = (
+  raw: string,
+  countryCode: CountryCode = "NG",
+): string => {
+  const trimmed = raw.trim();
+  if (!trimmed) return "";
+  const parsed = parsePhoneNumberFromString(trimmed, countryCode);
+  if (parsed?.isValid()) {
+    return parsed.format("E.164");
+  }
+  return "";
 };
 
 /** Meta send API expects digits only (no `+`). */

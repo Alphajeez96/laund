@@ -26,6 +26,14 @@ export interface GupshupV3WebhookBody {
           timestamp?: string | number;
           type?: string;
           text?: {body?: string};
+          flow?: {
+            flow_id: string;
+            flow_token?: string;
+            data: {
+              screen: string;
+              response: Record<string, unknown>;
+            };
+          };
         }>;
 
         statuses?: Array<{
