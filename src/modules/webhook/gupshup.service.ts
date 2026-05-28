@@ -58,8 +58,8 @@ const handleIncomingTextMessage = async (args: {
       appId: config.residentAppId,
       flowId: FLOW_CONFIG.SIGN_UP.id,
       screen: FLOW_CONFIG.SIGN_UP.screen,
-      body: "LaundOps is the operating system for your laundry. Let us handle the comms and unit economics. While you focus on doing the most for your customers. -manage orders, - pull your financials, get reminders, push reminders to your customers",
       header: `Hi ${args?.contactName ?? "Champ"}!`,
+      body: "LaundOps is the operating system for your laundry. Let us handle the comms and unit economics. While you focus on doing the most for your customers. -manage orders, - pull your financials, get reminders, push reminders to your customers",
       screenData: {
         laundry_name: args?.contactName ?? "",
         contact_number: toNationalDigits(fromE164),
