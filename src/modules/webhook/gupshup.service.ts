@@ -8,9 +8,14 @@ import {
   type GupshupV3WebhookBody,
 } from "./gupshup.types";
 import {LaundryService} from "../laundry/laundry.service";
+import {LaundryStatus} from "generated/prisma/enums";
 import {MessagingService} from "../messaging/messaging.service";
 import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
-import {inboundWaFromToE164, toNationalDigits} from "@/utils/phone";
+import {
+  inboundWaFromToE164,
+  toLocalE164,
+  toNationalDigits,
+} from "@/utils/phone";
 import {interpretMessage} from "@/modules/assistant/assistant.service";
 import {executeAssistantIntent} from "@/modules/assistant/assistant.router";
 
@@ -39,6 +44,52 @@ type IngestInput = {
 //   }
 //   return items;
 // };
+
+const handleFlowResponse = async (args: {
+  from: string;
+  flowId: string;
+  screen: string;
+  response: Record<string, unknown>;
+}) => {
+  if (args.flowId === FLOW_CONFIG.SIGN_UP.id) {
+    const data = args.response as {
+      laundry_name: string;
+      contact_email?: string;
+      contact_number: string;
+    };
+
+    const whatsappNumber = toLocalE164(data.contact_number);
+
+    const existing =
+      await LaundryRepository.findByWhatsappNumber(whatsappNumber);
+
+    if (existing) {
+      logger("[flow-signup] laundry already exists", {
+        whatsappNumber,
+        laundryId: existing.id,
+      });
+      //TODO: send Text message notifying them to carry out an action instead
+      return;
+    }
+
+    const laundry = await LaundryRepository.createLaundry({
+      whatsappNumber,
+      name: data.laundry_name,
+      status: LaundryStatus.live,
+      email: data?.contact_email ?? "",
+    });
+
+    logger("[flow-signup] laundry created from flow", {
+      whatsappNumber,
+      laundryId: laundry.id,
+      submittedBy: args.from,
+      name: data.laundry_name,
+    });
+
+    // TODO: create Gupshup app + generate embed link for WABA onboarding
+    // TODO: send welcome message with embed link via MessagingService.sendText
+  }
+};
 
 const handleIncomingTextMessage = async (args: {
   from: string;
@@ -181,7 +232,7 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
       ) {
         await LaundryService.updateLaundry(
           {appId},
-          {status: "live", wabaId: entry.id},
+          {status: LaundryStatus.live, wabaId: entry.id},
         );
       }
 
@@ -203,6 +254,15 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
             // from: msg.from,
             from: "2348030000011",
             text: msg.text.body,
+          });
+        }
+
+        if (msg.type === "flow" && msg.from) {
+          await handleFlowResponse({
+            from: msg.from,
+            flowId: msg?.flow?.flow_id ?? "",
+            screen: msg?.flow?.data?.screen ?? "",
+            response: msg?.flow?.data?.response ?? {},
           });
         }
       }
