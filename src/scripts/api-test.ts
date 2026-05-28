@@ -16,6 +16,10 @@ import {
   updateFlow,
   updateFlowJson,
 } from "@/integrations/gupshup/flow-ops";
+import {
+  getSubscriptions,
+  updateSubscriptionUrl,
+} from "@/integrations/gupshup/subscription-ops";
 
 const DEFAULT_FLOW_JSON_PATH =
   "src/integrations/gupshup/flows/laundryops-signup.flow.json";
@@ -37,6 +41,11 @@ function help(): void {
       "  publishFlow [appId] <flowId>",
       "  deprecateFlow [appId] <flowId>",
       "  deleteFlow [appId] <flowId>",
+      "",
+      "",
+      "Subscription fns:",
+      "  getSubscriptions [appId]",
+      "  updateSubscriptionUrl [appId] <subscriptionId> <newUrl>",
       "",
       "Notes:",
       `- If appId is omitted, defaults to RESIDENT_APP_ID (${config.residentAppId}).`,
@@ -148,6 +157,24 @@ const main = async () => {
     if (!arg4) throw new Error("deleteFlow requires: <flowId>");
     const res = await deleteFlow({appId, flowId: arg4});
     logger("deleteFlow", res);
+    return;
+  }
+
+  if (fnName === "getSubscriptions") {
+    const res = await getSubscriptions(appId);
+    logger("getSubscriptions", res);
+    return;
+  }
+
+  if (fnName === "updateSubscriptionUrl") {
+    if (!arg4) throw new Error("updateSubscriptionUrl requires: <subscriptionId>");
+    if (!arg5) throw new Error("updateSubscriptionUrl requires: <newUrl>");
+    const res = await updateSubscriptionUrl({
+      appId,
+      subscriptionId: Number(arg4),
+      url: arg5,
+    });
+    logger("updateSubscriptionUrl", res);
     return;
   }
 
