@@ -11,11 +11,8 @@ import {LaundryService} from "../laundry/laundry.service";
 import {LaundryStatus} from "generated/prisma/enums";
 import {MessagingService} from "../messaging/messaging.service";
 import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
-import {
-  inboundWaFromToE164,
-  toLocalE164,
-  toNationalDigits,
-} from "@/utils/phone";
+import {flowHandlers} from "@/integrations/gupshup/flows/flow.handlers";
+import {inboundWaFromToE164, toNationalDigits} from "@/utils/phone";
 import {interpretMessage} from "@/modules/assistant/assistant.service";
 import {executeAssistantIntent} from "@/modules/assistant/assistant.router";
 
@@ -51,44 +48,18 @@ const handleFlowResponse = async (args: {
   screen: string;
   response: Record<string, unknown>;
 }) => {
-  if (args.flowId === FLOW_CONFIG.SIGN_UP.id) {
-    const data = args.response as {
-      laundry_name: string;
-      contact_email?: string;
-      contact_number: string;
-    };
+  const handler = flowHandlers[args.flowId];
 
-    const whatsappNumber = toLocalE164(data.contact_number);
-
-    const existing =
-      await LaundryRepository.findByWhatsappNumber(whatsappNumber);
-
-    if (existing) {
-      logger("[flow-signup] laundry already exists", {
-        whatsappNumber,
-        laundryId: existing.id,
-      });
-      //TODO: send Text message notifying them to carry out an action instead
-      return;
-    }
-
-    const laundry = await LaundryRepository.createLaundry({
-      whatsappNumber,
-      name: data.laundry_name,
-      status: LaundryStatus.live,
-      email: data?.contact_email ?? "",
-    });
-
-    logger("[flow-signup] laundry created from flow", {
-      whatsappNumber,
-      laundryId: laundry.id,
-      submittedBy: args.from,
-      name: data.laundry_name,
-    });
-
-    // TODO: create Gupshup app + generate embed link for WABA onboarding
-    // TODO: send welcome message with embed link via MessagingService.sendText
+  if (!handler) {
+    logger("[webhook] no handler for flow", {flowId: args.flowId});
+    return;
   }
+
+  await handler({
+    from: args.from,
+    screen: args.screen,
+    response: args.response,
+  });
 };
 
 const handleIncomingTextMessage = async (args: {
