@@ -59,8 +59,9 @@
                 "type": "TextInput",
                 "name": "contact_number",
                 "label": "Phone",
-                "input-type": "phone",
+                "input-type": "text",
                 "required": true,
+                "pattern": "^0[0-9]{10}$",
                 "helper-text": "Laundry's contact (e.g. 08102...)"
               },
               {
