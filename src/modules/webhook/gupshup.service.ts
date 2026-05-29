@@ -62,7 +62,7 @@ const handleFlowResponse = async (args: {
   });
 };
 
-const handleIncomingTextMessage = async (args: {
+const handleTextMessage = async (args: {
   from: string;
   text: string;
   contactName?: string;
@@ -220,7 +220,7 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
       const contactName = value?.contacts?.[0]?.profile?.name;
       for (const msg of value?.messages ?? []) {
         if (msg.type === "text" && msg.text?.body && msg.from) {
-          await handleIncomingTextMessage({
+          await handleTextMessage({
             contactName,
             // from: msg.from,
             from: "2348030000011",
