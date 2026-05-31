@@ -17,7 +17,7 @@ const existsById = async (args: LaundryLookup) => {
   });
 };
 
-const findByWhatsappNumber = async (whatsappNumber: string) => {
+const findByContact = async (whatsappNumber: string) => {
   return prisma.laundry.findUnique({
     where: {whatsappNumber},
   });
@@ -34,5 +34,5 @@ export const LaundryRepository = {
   existsById,
   createLaundry,
   updateLaundry,
-  findByWhatsappNumber,
+  findByContact,
 };

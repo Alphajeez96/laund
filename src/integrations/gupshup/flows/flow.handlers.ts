@@ -21,7 +21,7 @@ const handleSignupFlow: FlowHandler = async (args) => {
   };
 
   const whatsappNumber = toLocalE164(data.contact_number);
-  const existing = await LaundryRepository.findByWhatsappNumber(whatsappNumber);
+  const existing = await LaundryRepository.findByContact(whatsappNumber);
 
   if (existing) {
     logger("[flow-signup] laundry already exists", {

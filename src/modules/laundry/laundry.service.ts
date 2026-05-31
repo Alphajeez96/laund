@@ -19,7 +19,7 @@ const getLaundry = async (id: string) => {
 
 const createLaundry = async (data: ICreateLaundry) => {
   const {whatsappNumber, name: rawName, email} = data;
-  const itExists = await LaundryRepository.findByWhatsappNumber(whatsappNumber);
+  const itExists = await LaundryRepository.findByContact(whatsappNumber);
 
   if (itExists) {
     throw new ApiError(httpStatus.CONFLICT, "Laundry already exists");
@@ -52,9 +52,7 @@ const updateLaundry = async (lookup: LaundryLookup, data: IUpdateLaundry) => {
     data.whatsappNumber !== undefined &&
     data.whatsappNumber !== existing.whatsappNumber
   ) {
-    const taken = await LaundryRepository.findByWhatsappNumber(
-      data.whatsappNumber,
-    );
+    const taken = await LaundryRepository.findByContact(data.whatsappNumber);
     if (taken) {
       throw new ApiError(httpStatus.CONFLICT, "Laundry already exists");
     }
