@@ -2,10 +2,11 @@ import config from "@/config/config";
 import logger from "@/utils/logger";
 import {requestAppJson} from "@/utils/catch-async";
 import {toWhatsAppRecipientDigits} from "@/utils/phone";
+import type {MediaType} from "@/integrations/gupshup/types";
 
 interface OutboundMessage {
   to: string;
-  appId: string;
+  appId?: string;
   message: string;
 }
 
@@ -13,7 +14,7 @@ type OutboundFlowMessage = {
   to: string;
   cta: string;
   body: string;
-  appId: string;
+  appId?: string;
   flowId: string;
   header?: string;
   footer?: string;
@@ -23,7 +24,18 @@ type OutboundFlowMessage = {
   | {screen: string; screenData: Record<string, unknown>}
 );
 
-const sendText = async ({to, message, appId}: OutboundMessage) => {
+type OutboundMediaMessage = {
+  to: string;
+  appId?: string;
+  caption: string;
+  mediaType?: MediaType;
+} & ({id: string; link?: never} | {id?: never; link: string});
+
+const sendText = async ({
+  to,
+  message,
+  appId = config.residentAppId,
+}: OutboundMessage) => {
   const payload = {
     type: "text",
     text: {body: message},
@@ -39,7 +51,10 @@ const sendText = async ({to, message, appId}: OutboundMessage) => {
   }
 };
 
-const sendFlow = async (data: OutboundFlowMessage) => {
+const sendFlow = async ({
+  appId = config.residentAppId,
+  ...data
+}: OutboundFlowMessage) => {
   const params: Record<string, unknown> = {
     flow_cta: data.cta,
     flow_id: data.flowId,
@@ -69,15 +84,15 @@ const sendFlow = async (data: OutboundFlowMessage) => {
 
   try {
     return await handleSendAction({
+      appId,
       payload,
-      appId: data.appId,
       context: "send flow",
     });
   } catch {
     logger("sendFlow failed, falling back to text", payload);
     return sendText({
+      appId,
       to: data.to,
-      appId: data.appId,
       message:
         data?.fallbackText ?? "Hi Champ, Please retry your previous request!",
     });
@@ -100,7 +115,36 @@ const handleSendAction = async ({
   });
 };
 
+const sendMedia = async ({
+  mediaType = "image",
+  appId = config.residentAppId,
+  ...data
+}: OutboundMediaMessage) => {
+  const payload = {
+    type: mediaType,
+    recipient_type: "individual",
+    messaging_product: "whatsapp",
+    to: toWhatsAppRecipientDigits(data.to),
+    [mediaType]: {
+      caption: data.caption,
+      ...(data?.id ? {id: data.id} : {}),
+      ...(data?.link ? {link: data.link} : {}),
+    },
+  };
+
+  try {
+    return await handleSendAction({
+      appId,
+      payload,
+      context: `send ${mediaType}`,
+    });
+  } catch {
+    logger("sendMedia failed", {appId, payload});
+  }
+};
+
 export const MessagingService = {
   sendText,
   sendFlow,
+  sendMedia,
 };

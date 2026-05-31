@@ -11,3 +11,5 @@ export type PartnerLoginResponse = {
   status?: string;
   message?: string;
 };
+
+export type MediaType = "image" | "video" | "audio" | "document";
