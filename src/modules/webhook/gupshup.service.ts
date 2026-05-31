@@ -77,11 +77,11 @@ const handleTextMessage = async (args: {
     const payload = {
       to: fromE164,
       cta: "Get started",
-      appId: config.residentAppId,
+      // appId: config.residentAppId,
       flowId: FLOW_CONFIG.SIGN_UP.id,
       screen: FLOW_CONFIG.SIGN_UP.screen,
       header: `Hi ${args?.contactName ?? "Champ"}!`,
-      body: "LaundOps is the operating system for your laundry. Let us handle the comms and unit economics. While you focus on doing the most for your customers. -manage orders, - pull your financials, get reminders, push reminders to your customers",
+      body: "🧺 Meet LaundOps — your laundry's new right hand. Track orders, remember pickup dates, send customer reminders, and keep an eye on revenue without juggling notebooks and spreadsheets. You handle the cleaning. We'll help handle the operations. Let's get you set up. ✨",
       screenData: {
         laundry_name: args?.contactName ?? "",
         contact_number: toNationalDigits(fromE164),
