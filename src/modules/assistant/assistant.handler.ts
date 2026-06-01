@@ -6,6 +6,8 @@ import {prisma} from "@/lib/prisma";
 import {CustomerRepository} from "@/modules/customer/customer.repository";
 import {OrderRepository} from "@/modules/order/order.repository";
 import {OrderService} from "@/modules/order/order.service";
+import {MessagingService} from "@/modules/messaging/messaging.service";
+import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
 import {
   FinancialReportArgsSchema,
   GetOrderArgsSchema,
@@ -33,6 +35,55 @@ export type AssistantIntentHandler = (
   ctx: AssistantContext,
   envelope: LlmEnvelope,
 ) => Promise<AssistantExecutionResult>;
+
+const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
+  const parsed = RecordOrderArgsSchema.safeParse(envelope.args);
+  const args = parsed.success
+    ? parsed.data
+    : {
+        notes: null,
+        items: null,
+        pickupDate: null,
+        totalAmount: null,
+        customerName: null,
+        customerPhone: null,
+      };
+
+  const items = args.items && args.items.length > 0 ? args.items : null;
+  if (!items || items.length === 0) {
+    return {
+      replyText:
+        envelope.reply ||
+        "I can help with that. Please provide the items and quantities.",
+    };
+  }
+
+  await MessagingService.sendFlow({
+    to: ctx.fromE164,
+    cta: "Continue",
+    flowId: FLOW_CONFIG.RECORD_ORDER.id,
+    screen: FLOW_CONFIG.RECORD_ORDER.screen,
+    header: "Confirm Order",
+    body: "Review the items and fill in any missing details.",
+    screenData: {
+      items_source: items.map((item, i) => ({
+        id: String(i),
+        title: item.itemName,
+        description: `${item.quantity} piece${item.quantity > 1 ? "s" : ""}`,
+        // image: getItemIcon(item.itemName),
+        "alt-text": item.itemName,
+      })),
+      confirmed_items: items.map((_, i) => String(i)),
+      items_json: JSON.stringify(items),
+      customer_name: args.customerName ?? "",
+      customer_phone: args.customerPhone ?? "",
+      pickup_date: args.pickupDate ?? "",
+      total_amount: args.totalAmount ?? null,
+    },
+  });
+
+  return {replyText: ""};
+};
 
 function isIsoDate(v: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(v);
@@ -84,77 +135,6 @@ const handleUnknown: AssistantIntentHandler = async (_ctx, envelope) => ({
     envelope.reply ||
     "What would you like to do? For example: record an order, list orders, or get a revenue report.",
 });
-
-const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
-  const parsed = RecordOrderArgsSchema.safeParse(envelope.args);
-  const args = parsed.success
-    ? parsed.data
-    : {
-        notes: null,
-        items: null,
-        pickupDate: null,
-        totalAmount: null,
-        customerName: null,
-        customerPhone: null,
-      };
-
-  const missing: string[] = [];
-
-  const customerE164 = args.customerPhone ? toE164(args.customerPhone) : null;
-  const validCustomerPhone =
-    customerE164 && isValidPhoneNumber(customerE164) ? customerE164 : null;
-
-  if (!validCustomerPhone) missing.push("customerPhone");
-
-  const items = args.items && args.items.length > 0 ? args.items : null;
-  if (!items || items.length === 0) missing.push("items");
-
-  const pickupDate =
-    args.pickupDate && isIsoDate(args.pickupDate) ? args.pickupDate : null;
-
-  if (missing.length > 0) {
-    return {
-      replyText:
-        envelope.reply ||
-        `I can help with that. Please provide: ${missing.join(", ")}.`,
-    };
-  }
-
-  let customer = await CustomerRepository.findByLaundryAndPhoneNumber(
-    ctx.laundry.id,
-    validCustomerPhone!,
-  );
-  if (!customer) {
-    customer = await CustomerRepository.createCustomer({
-      laundryId: ctx.laundry.id,
-      phoneNumber: validCustomerPhone!,
-      name: args.customerName ?? undefined,
-    });
-  }
-
-  const order = await OrderService.createOrder({
-    laundryId: ctx.laundry.id,
-    customerId: customer.id,
-    pickupDate: pickupDate ?? undefined,
-    totalAmount: args.totalAmount ?? undefined,
-    orderItems: (items ?? []).map((it) => ({
-      itemName: it.itemName,
-      quantity: it.quantity,
-    })),
-  });
-
-  const shortId = order.id.slice(0, 8);
-  const itemSummary = order.orderItems
-    .map((it) => `${it.quantity} ${it.itemName}`)
-    .join(", ");
-
-  return {
-    replyText:
-      `Recorded order ${shortId} for ${customer.phoneNumber}. ` +
-      `Items: ${itemSummary}` +
-      (pickupDate ? `. Pickup: ${pickupDate}` : ""),
-  };
-};
 
 const handleListOrders: AssistantIntentHandler = async (ctx, envelope) => {
   const parsed = ListOrdersArgsSchema.safeParse(envelope.args);
