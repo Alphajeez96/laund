@@ -62,41 +62,33 @@ const handleFlowResponse = async (args: {
   });
 };
 
+const sendSignupFlow = async (to: string, contactName: string) => {
+  await MessagingService.sendFlow({
+    to,
+    cta: "Get started",
+    flowId: FLOW_CONFIG.SIGN_UP.id,
+    screen: FLOW_CONFIG.SIGN_UP.screen,
+    header: `Hi ${contactName ?? "Champ"}!`,
+    body:
+      "🧺 Meet Ezar — your laundry's new right hand.\n\n" +
+      "• Track orders\n" +
+      "• Remember pickup dates\n" +
+      "• Send customer reminders\n" +
+      "• and Keep an eye on revenue without jugglig notebooks and spreadsheets\n\n" +
+      "You handle the cleaning. We'll help handle the operations.\n" +
+      "Let's get you set up. ✨",
+    screenData: {
+      laundry_name: contactName ?? "",
+      contact_number: toNationalDigits(to),
+    },
+  });
+};
+
 const handleTextMessage = async (args: {
   from: string;
   text: string;
-  contactName?: string;
+  laundry: {id: string; name: string; whatsappNumber: string};
 }) => {
-  // check if laundry exists, else send a help form to register.
-  // parse message
-
-  const fromE164 = inboundWaFromToE164(args.from);
-  const laundry = await LaundryRepository.findByWhatsappNumber(fromE164);
-
-  if (!laundry) {
-    const payload = {
-      to: fromE164,
-      cta: "Get started",
-      flowId: FLOW_CONFIG.SIGN_UP.id,
-      screen: FLOW_CONFIG.SIGN_UP.screen,
-      header: `Hi ${args?.contactName ?? "Champ"}!`,
-      body:
-        "🧺 Meet Ezar — your laundry's new right hand.\n\n" +
-        "• Track orders\n" +
-        "• Remember pickup dates\n" +
-        "• Send customer reminders\n" +
-        "• and Keep an eye on revenue without jugglig notebooks and spreadsheets\n\n" +
-        "You handle the cleaning. We'll help handle the operations.\n" +
-        "Let's get you set up. ✨",
-      screenData: {
-        laundry_name: args?.contactName ?? "",
-        contact_number: toNationalDigits(fromE164),
-      },
-    };
-
-    return await MessagingService.sendFlow(payload);
-  }
-
   const envelope = await interpretMessage(args.text);
   logger("ENVELOPE", envelope);
 
@@ -109,14 +101,14 @@ const handleTextMessage = async (args: {
   // }
 
   const result = await executeAssistantIntent(
-    {laundry, fromE164, text: args.text},
+    {laundry: args.laundry, fromE164: args.from, text: args.text},
     envelope,
   );
 
   // Outbound reply via the resident app is not implemented yet; keep the logs rich.
   console.info("[assistant] reply", {
-    laundryId: laundry.id,
-    from: fromE164,
+    from: args.from,
+    laundryId: args.laundry.id,
     intent: envelope.intent,
     confidence: envelope.confidence,
     missing: envelope.missing,
@@ -194,24 +186,27 @@ const handleTextMessage = async (args: {
 
 const handleV3 = async (body: GupshupV3WebhookBody) => {
   const appId = body.gs_app_id;
-  const laundry = await LaundryRepository.existsById({appId});
-  if (!laundry) {
-    console.warn("[gupshup-webhook] no laundry for gs_app_id", appId);
+
+  // Caters to our internal system for now.
+  const adminLaundry = await LaundryRepository.existsById({appId});
+  if (!adminLaundry) {
+    console.warn("[gupshup-webhook] no adminLaundry for gs_app_id", appId);
     return;
   }
 
   for (const entry of body.entry ?? []) {
     for (const change of entry.changes ?? []) {
-      // META ONBOARDING EVENT HERE
-      if (
-        change.field === "account-event" &&
-        change?.value?.payload?.status === "ACCOUNT_VERIFIED"
-      ) {
-        await LaundryService.updateLaundry(
-          {appId},
-          {status: LaundryStatus.live, wabaId: entry.id},
-        );
-      }
+      // META ONBOARDING EVENT HERE, commented out in the while
+
+      // if (
+      //   change.field === "account-event" &&
+      //   change?.value?.payload?.status === "ACCOUNT_VERIFIED"
+      // ) {
+      //   await LaundryService.updateLaundry(
+      //     {appId},
+      //     {status: LaundryStatus.live, wabaId: entry.id},
+      //   );
+      // }
 
       if (appId === config.residentAppId)
         if (change.field !== "messages") continue;
@@ -221,26 +216,37 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
 
       const value = change.value;
 
-      // Inbound messages (V3). ([partner-docs.gupshup.io](https://partner-docs.gupshup.io/docs/set-callback-url-1))
       // WE NEED TO GET THE FROM CONTACT HERE THAT WOUKD BE THE LAUNDRY.
-      const contactName = value?.contacts?.[0]?.profile?.name;
+      const contactName = value?.contacts?.[0]?.profile?.name ?? "";
       for (const msg of value?.messages ?? []) {
-        if (msg.type === "text" && msg.text?.body && msg.from) {
-          await handleTextMessage({
-            contactName,
-            // from: msg.from,
-            from: "2348030000011",
-            text: msg.text.body,
-          });
-        }
+        if (msg.from) {
+          const fromE164 = inboundWaFromToE164(msg.from);
+          const laundry = await LaundryRepository.findByContact(fromE164);
 
-        if (msg.type === "flow" && msg.from) {
-          await handleFlowResponse({
-            from: msg.from,
-            flowId: msg?.flow?.flow_id ?? "",
-            screen: msg?.flow?.data?.screen ?? "",
-            response: msg?.flow?.data?.response ?? {},
-          });
+          if (!laundry) {
+            await sendSignupFlow(fromE164, contactName);
+            continue;
+          }
+
+          // Handle Texts
+          if (msg.type === "text" && msg.text?.body) {
+            await handleTextMessage({
+              laundry,
+              // from: fromE164,
+              from: "2348030000011",
+              text: msg.text.body,
+            });
+          }
+
+          // Handle Flow messages
+          if (msg.type === "flow") {
+            await handleFlowResponse({
+              from: msg.from,
+              flowId: msg?.flow?.flow_id ?? "",
+              screen: msg?.flow?.data?.screen ?? "",
+              response: msg?.flow?.data?.response ?? {},
+            });
+          }
         }
       }
 
