@@ -1,0 +1,181 @@
+{
+  "version": "7.3",
+  "screens": [
+    {
+      "id": "CONFIRM_ITEMS",
+      "title": "Confirm Items",
+      "data": {
+        "items_source": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": {"type": "string"},
+              "title": {"type": "string"},
+              "description": {"type": "string"},
+              "image": {"type": "string"},
+              "alt-text": {"type": "string"}
+            },
+            "required": ["id", "title"]
+          },
+          "__example__": [
+            {
+              "id": "0",
+              "title": "Shirt",
+              "description": "3 pieces",
+              "image": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dneAcoSEh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYI4Q/2gAMAwEAAhEBAxEQA/AK1//Z",
+              "alt-text": "Shirt"
+            },
+            {
+              "id": "1",
+              "title": "Trousers",
+              "description": "2 pieces",
+              "image": "/9j/4AAQSkZJRgABAQAAAQABAAD/2wBDAAgGBgcGBQgHBwcJCQgKDBQNDAsLDBkSEw8UHRofHh0aHBwgJC4nICIsIxwcKDcpLDAxNDQ0Hyc5PTgyPC4zNDL/2wBDAQkJCQwLDBgNDRgyIRwhMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjIyMjL/wAARCAABAAEDASIAAhEBAxEB/8QAHwAAAQUBAQEBAQEAAAAAAAAAAAECAwQFBgcICQoL/8QAtRAAAgEDAwIEAwUFBAQAAAF9AQIDAAQRBRIhMUEGE1FhByJxFDKBkaEII0KxwRVS0fAkM2JyggkKFhcYGRolJicoKSo0NTY3ODk6Q0RFRkdISUpTVFVWV1hZWmNkZWZnaGlqc3R1dneAcoSEh4iJipKTlJWWl5iZmqKjpKWmp6ipqrKztLW2t7i5usLDxMXGx8jJytLT1NXW19jZ2uHi4+Tl5ufo6erx8vP09fb3+Pn6/8QAHwEAAwEBAQEBAQEBAQAAAAAAAAECAwQFBgcICQoL/8QAtREAAgECBAQDBAcFBAQAAQJ3AAECAxEEBSExBhJBUQdhcRMiMoEIFEKRobHBCSMzUvAVYnLRChYkNOEl8RcYI4Q/2gAMAwEAAhEBAxEQA/AK1//Z",
+              "alt-text": "Trousers"
+            }
+          ]
+        },
+        "items_json": {"type": "string", "__example__": ""},
+        "confirmed_items": {
+          "type": "array",
+          "items": {"type": "string"},
+          "__example__": ["0", "1"]
+        },
+        "customer_name": {"type": "string", "__example__": ""},
+        "customer_phone": {"type": "string", "__example__": ""},
+        "pickup_date": {"type": "string", "__example__": ""},
+        "total_amount": {"type": "number", "__example__": 0}
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "confirm_form",
+            "init-values": {
+              "confirmed_items": "${data.confirmed_items}"
+            },
+            "children": [
+              {
+                "type": "CheckboxGroup",
+                "name": "confirmed_items",
+                "label": "Review your entry",
+                "required": true,
+                "data-source": "${data.items_source}"
+              },
+              {
+                "type": "TextCaption",
+                "text": "Please note that unchecking an item removes it from the entry"
+              },
+              {
+                "type": "Footer",
+                "label": "Continue",
+                "on-click-action": {
+                  "name": "navigate",
+                  "next": {
+                    "type": "screen",
+                    "name": "ADDITIONAL_DETAILS"
+                  },
+                  "payload": {
+                    "confirmed_items": "${form.confirmed_items}",
+                    "items_json": "${data.items_json}",
+                    "customer_name": "${data.customer_name}",
+                    "customer_phone": "${data.customer_phone}",
+                    "pickup_date": "${data.pickup_date}",
+                    "total_amount": "${data.total_amount}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "ADDITIONAL_DETAILS",
+      "title": "Additional Details",
+      "terminal": true,
+      "data": {
+        "confirmed_items": {
+          "type": "array",
+          "items": {"type": "string"},
+          "__example__": ["0", "1"]
+        },
+        "items_json": {
+          "type": "string",
+          "__example__": "[{\"itemName\":\"Shirt\",\"quantity\":3}]"
+        },
+        "customer_name": {"type": "string", "__example__": ""},
+        "customer_phone": {"type": "string", "__example__": ""},
+        "pickup_date": {"type": "string", "__example__": ""},
+        "total_amount": {"type": "number", "__example__": 0}
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "TextHeading",
+            "text": "Extra Information"
+          },
+          {
+            "type": "Form",
+            "name": "order_form",
+            "init-values": {
+              "customer_name": "${data.customer_name}",
+              "customer_phone": "${data.customer_phone}",
+              "pickup_date": "${data.pickup_date}",
+              "total_amount": "${data.total_amount}"
+            },
+            "children": [
+              {
+                "type": "TextInput",
+                "name": "customer_name",
+                "label": "Customer Name",
+                "input-type": "text",
+                "required": false
+              },
+              {
+                "type": "TextInput",
+                "name": "customer_phone",
+                "label": "Customer Phone",
+                "input-type": "phone",
+                "required": true,
+                "helper-text": "WhatsApp number with country code"
+              },
+              {
+                "type": "TextInput",
+                "name": "pickup_date",
+                "label": "Pickup Date",
+                "input-type": "text",
+                "required": false,
+                "helper-text": "e.g. 2026-06-03"
+              },
+              {
+                "type": "TextInput",
+                "name": "total_amount",
+                "label": "Total Amount (₦)",
+                "input-type": "number",
+                "required": false
+              },
+              {
+                "type": "Footer",
+                "label": "Confirm Order",
+                "on-click-action": {
+                  "name": "complete",
+                  "payload": {
+                    "confirmed_items": "${data.confirmed_items}",
+                    "customer_name": "${form.customer_name}",
+                    "customer_phone": "${form.customer_phone}",
+                    "pickup_date": "${form.pickup_date}",
+                    "total_amount": "${form.total_amount}",
+                    "items_json": "${data.items_json}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
