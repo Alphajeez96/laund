@@ -1,20 +1,6 @@
 import {z} from "zod";
 import {OrderStatus} from "generated/prisma/enums";
 
-// export const ASSISTANT_INTENTS = [
-//   "help",
-//   "get_order",
-//   "list_orders",
-//   "record_order",
-//   // "send_reminder",
-//   "mark_order_paid",
-//   "financial_report",
-//   "schedule_reminder",
-//   "update_order_status",
-//   "send_customer_message",
-//   "unknown",
-// ] as const;
-
 export const ASSISTANT_INTENTS = {
   HELP: "help",
   GET_ORDER: "get_order",
@@ -26,7 +12,7 @@ export const ASSISTANT_INTENTS = {
   SCHEDULE_REMINDER: "schedule_reminder",
   UPDATE_ORDER_STATUS: "update_order_status",
   SEND_CUSTOMER_MESSAGE: "send_customer_message",
-  UNKNOWM: "unkmown",
+  UNKNOWN: "unknown",
 };
 
 export type AssistantIntentName = typeof ASSISTANT_INTENTS;
@@ -127,3 +113,12 @@ export const ScheduleReminderArgsSchema = z.object({
 });
 
 export type ScheduleReminderArgs = z.infer<typeof ScheduleReminderArgsSchema>;
+
+export const SendReminderArgsSchema = z.object({
+  orderId: z.string().min(1),
+  customerPhone: z.string().nullable(),
+  when: z.string().nullable(), // YYYY-MM-DD or YYYY-MM-DDTHH:mm:ssZ
+  text: z.string().nullable(),
+});
+
+export type SendReminderArgs = z.infer<typeof SendReminderArgsSchema>;

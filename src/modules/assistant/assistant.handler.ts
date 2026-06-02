@@ -376,7 +376,7 @@ const handleScheduleReminder: AssistantIntentHandler = async (
 
 export const assistantIntentHandlers: Record<string, AssistantIntentHandler> = {
   [ASSISTANT_INTENTS.HELP]: handleHelp,
-  [ASSISTANT_INTENTS.UNKNOWM]: handleUnknown,
+  [ASSISTANT_INTENTS.UNKNOWN]: handleUnknown,
   [ASSISTANT_INTENTS.GET_ORDER]: handleGetOrder,
   [ASSISTANT_INTENTS.LIST_ORDERS]: handleListOrders,
   [ASSISTANT_INTENTS.RECORD_ORDER]: handleRecordOrder,

@@ -32,6 +32,7 @@ export const buildSystemPrompt = (todayIsoDate: string): string => {
     "- mark_order_paid: args={ orderId, isPaid (true|false), totalAmount|null }",
     '- financial_report: args={ period ("today"|"week"|"month"|"custom"), from|null (YYYY-MM-DD), to|null (YYYY-MM-DD) }',
     "- send_customer_message: args={ customerPhone, text }",
+    '- send_reminder: args={ orderId, customerPhone|null, when|null (YYYY-MM-DD or YYYY-MM-DDTHH:mm:ssZ), text|null }',
     "- schedule_reminder: args={ orderId|null, customerPhone|null, when|null, text|null }",
     "- unknown: args={} and put a clarifying question in reply",
     "",
@@ -68,5 +69,11 @@ export const buildSystemPrompt = (todayIsoDate: string): string => {
     "",
     'User: "12 shirts, 5 trousers and 2 native wears, 7 boxers, one shoe, 081000546"',
     'Output: {"intent":"record_order","confidence":0.85,"args":{"customerPhone":"+23481000546","customerName":null,"pickupDate":null,"items":[{"itemName":"shirt","quantity":12},{"itemName":"trousers","quantity":5},{"itemName":"native wear","quantity":2},{"itemName":"boxers","quantity":7},{"itemName":"shoe","quantity":1}],"totalAmount":null,"notes":null},"reply":"","missing":["pickupDate"]}',
+    "",
+    'User: "send reminder for order 7c2..."',
+    'Output: {"intent":"send_reminder","confidence":0.8,"args":{"orderId":"7c2...","customerPhone":null,"when":null,"text":null},"reply":"","missing":[]}',
+    "",
+    'User: "remind 08031234567 about order 7c2... pickup is tomorrow"',
+    'Output: {"intent":"send_reminder","confidence":0.85,"args":{"orderId":"7c2...","customerPhone":"+2348031234567","when":"${tomorrowIsoDate}","text":"Reminder: your items are ready for pickup tomorrow."},"reply":"","missing":[]}',
   ].join("\n");
 };
