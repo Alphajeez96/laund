@@ -65,7 +65,7 @@
               },
               {
                 "type": "TextCaption",
-                "text": "Please note that unchecking an item removes it from the entry"
+                "text": "PS: unchecking an item removes it from the entry"
               },
               {
                 "type": "Footer",
