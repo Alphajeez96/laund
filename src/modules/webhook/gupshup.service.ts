@@ -105,6 +105,13 @@ const handleTextMessage = async (args: {
     envelope,
   );
 
+  if (result.replyText) {
+    MessagingService.sendText({
+      message: result.replyText,
+      to: inboundWaFromToE164(args.from),
+    });
+  }
+
   // Outbound reply via the resident app is not implemented yet; keep the logs rich.
   console.info("[assistant] reply", {
     from: args.from,

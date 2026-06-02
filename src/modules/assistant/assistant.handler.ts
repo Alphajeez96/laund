@@ -85,6 +85,14 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
   return {replyText: ""};
 };
 
+const handleHelp: AssistantIntentHandler = async () => ({
+  replyText:
+    "Try:\n" +
+    '- "record a new order for 08023... 2 shirts, 3 shorts, totalling 10000 naira. pickup tomorrow"\n' +
+    '- "list pending orders"\n' +
+    '- "How much have we made this week?"\n',
+});
+
 function isIsoDate(v: string): boolean {
   return /^\d{4}-\d{2}-\d{2}$/.test(v);
 }
@@ -121,14 +129,6 @@ function formatMoney(v: unknown): string {
   if (!Number.isFinite(n)) return String(v);
   return n.toFixed(2);
 }
-
-const handleHelp: AssistantIntentHandler = async () => ({
-  replyText:
-    "Try:\n" +
-    '- "record a new order for 08023... 2 shirts, 3 shorts, pickup tomorrow"\n' +
-    '- "list pending orders"\n' +
-    '- "revenue today"',
-});
 
 const handleUnknown: AssistantIntentHandler = async (_ctx, envelope) => ({
   replyText:

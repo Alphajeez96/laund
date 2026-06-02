@@ -54,7 +54,7 @@ const handleSignupFlow: FlowHandler = async (args) => {
     message:
       "🎉 You're all set Champ! Welcome to Ezar.\n\n" +
       "To get started, simply send your first order message. Example:\n" +
-      "Record 3 shirts and 2 trousers for John, totalling 5000. Pickup Saturday.\n" +
+      "Record 3 shirts and 2 trousers for John, totalling 10000 naira. Pickup Saturday.\n" +
       "or simply send a voice note detailing what you'd want",
   });
 
