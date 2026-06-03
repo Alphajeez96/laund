@@ -8,6 +8,7 @@ import {OrderRepository} from "@/modules/order/order.repository";
 import {OrderService} from "@/modules/order/order.service";
 import {MessagingService} from "@/modules/messaging/messaging.service";
 import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
+import {getItemIcon} from "@/utils/item-icons";
 import {
   FinancialReportArgsSchema,
   GetOrderArgsSchema,
@@ -71,7 +72,7 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
         id: String(i),
         title: item.itemName,
         description: `${item.quantity} piece${item.quantity > 1 ? "s" : ""}`,
-        // image: getItemIcon(item.itemName),
+        image: getItemIcon(item.itemName),
         "alt-text": item.itemName,
       })),
       confirmed_items: items.map((_, i) => String(i)),
