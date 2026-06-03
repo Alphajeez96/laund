@@ -82,6 +82,7 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     customer_name: string;
     customer_phone: string;
     pickup_date: string;
+    time_slot: string | null;
     total_amount: string;
     items_json: string;
   };
@@ -146,12 +147,15 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     .map((it) => `${it.quantity} ${it.itemName}`)
     .join(", ");
 
+  const timeInfo = data.pickup_date
+    ? `. Pickup: ${data.pickup_date}${data.time_slot ? ` @ ${data.time_slot}` : ""}`
+    : "";
+
   await MessagingService.sendText({
     to: fromE164,
     message:
       `Recorded order ${shortId} for ${customer.phoneNumber}. ` +
-      `Items: ${itemSummary}` +
-      (data.pickup_date ? `. Pickup: ${data.pickup_date}` : ""),
+      `Items: ${itemSummary}${timeInfo}`,
   });
 };
 

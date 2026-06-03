@@ -119,10 +119,6 @@
         "type": "SingleColumnLayout",
         "children": [
           {
-            "type": "TextHeading",
-            "text": "Extra Information"
-          },
-          {
             "type": "Form",
             "name": "order_form",
             "init-values": {
@@ -154,6 +150,30 @@
                 "required": false
               },
               {
+                "type": "If",
+                "condition": "${form.pickup_date} != ''",
+                "then": [
+                  {
+                    "type": "Dropdown",
+                    "name": "time_slot",
+                    "label": "Pickup Time",
+                    "required": true,
+                    "data-source": [
+                      {"id": "08:00", "title": "08:00"},
+                      {"id": "09:00", "title": "09:00"},
+                      {"id": "10:00", "title": "10:00"},
+                      {"id": "11:00", "title": "11:00"},
+                      {"id": "12:00", "title": "12:00"},
+                      {"id": "13:00", "title": "13:00"},
+                      {"id": "14:00", "title": "14:00"},
+                      {"id": "15:00", "title": "15:00"},
+                      {"id": "16:00", "title": "16:00"},
+                      {"id": "17:00", "title": "17:00"}
+                    ]
+                  }
+                ]
+              },
+              {
                 "type": "TextInput",
                 "name": "total_amount",
                 "label": "Total Amount",
@@ -171,6 +191,7 @@
                     "customer_name": "${form.customer_name}",
                     "customer_phone": "${form.customer_phone}",
                     "pickup_date": "${form.pickup_date}",
+                    "time_slot": "${form.time_slot}",
                     "total_amount": "${form.total_amount}",
                     "items_json": "${data.items_json}"
                   }
