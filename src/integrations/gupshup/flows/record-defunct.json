@@ -41,11 +41,14 @@
           "items": {"type": "string"},
           "__example__": ["0", "1"]
         },
+
         "customer_name": {"type": "string", "__example__": ""},
         "customer_phone": {"type": "string", "__example__": ""},
         "pickup_date": {"type": "string", "__example__": ""},
-        "total_amount": {"type": "number", "__example__": 0}
+        "total_amount": {"type": "number", "__example__": 0},
+        "min_date": {"type": "string", "__example__": "2026-06-02"}
       },
+
       "layout": {
         "type": "SingleColumnLayout",
         "children": [
@@ -65,7 +68,7 @@
               },
               {
                 "type": "TextCaption",
-                "text": "Please note that unchecking an item removes it from the entry"
+                "text": "PS: unchecking an item removes it from the entry"
               },
               {
                 "type": "Footer",
@@ -82,7 +85,8 @@
                     "customer_name": "${data.customer_name}",
                     "customer_phone": "${data.customer_phone}",
                     "pickup_date": "${data.pickup_date}",
-                    "total_amount": "${data.total_amount}"
+                    "total_amount": "${data.total_amount}",
+                    "min_date": "${data.min_date}"
                   }
                 }
               }
@@ -108,7 +112,8 @@
         "customer_name": {"type": "string", "__example__": ""},
         "customer_phone": {"type": "string", "__example__": ""},
         "pickup_date": {"type": "string", "__example__": ""},
-        "total_amount": {"type": "number", "__example__": 0}
+        "total_amount": {"type": "number", "__example__": 0},
+        "min_date": {"type": "string", "__example__": "2026-06-02"}
       },
       "layout": {
         "type": "SingleColumnLayout",
@@ -122,9 +127,7 @@
             "name": "order_form",
             "init-values": {
               "customer_name": "${data.customer_name}",
-              "customer_phone": "${data.customer_phone}",
-              "pickup_date": "${data.pickup_date}",
-              "total_amount": "${data.total_amount}"
+              "customer_phone": "${data.customer_phone}"
             },
             "children": [
               {
@@ -140,22 +143,23 @@
                 "label": "Customer Phone",
                 "input-type": "phone",
                 "required": true,
-                "helper-text": "WhatsApp number with country code"
+                "helper-text": "customer's contact (e.g. 08102...)"
               },
               {
-                "type": "TextInput",
+                "type": "CalendarPicker",
                 "name": "pickup_date",
                 "label": "Pickup Date",
-                "input-type": "text",
-                "required": false,
-                "helper-text": "e.g. 2026-06-03"
+                "mode": "single",
+                "min-date": "${data.min_date}",
+                "required": false
               },
               {
                 "type": "TextInput",
                 "name": "total_amount",
-                "label": "Total Amount (₦)",
+                "label": "Total Amount",
                 "input-type": "number",
-                "required": false
+                "helper-text": "enter total amount (e.g. 12450)",
+                "required": true
               },
               {
                 "type": "Footer",

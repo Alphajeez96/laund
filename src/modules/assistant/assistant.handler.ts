@@ -79,6 +79,7 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
       customer_phone: args.customerPhone ?? "",
       pickup_date: args.pickupDate ?? "",
       total_amount: args.totalAmount ?? null,
+      min_date: new Date().toISOString().slice(0, 10),
     },
   });
 
