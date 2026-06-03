@@ -56,6 +56,7 @@ export const RecordOrderArgsSchema = z.object({
     .nullable(),
   totalAmount: z.coerce.number().nonnegative().nullable(),
   notes: z.string().nullable(),
+  timeSlot: z.string().nullable(),
 });
 
 export type RecordOrderArgs = z.infer<typeof RecordOrderArgsSchema>;
