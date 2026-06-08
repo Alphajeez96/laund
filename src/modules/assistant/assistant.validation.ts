@@ -2,17 +2,17 @@ import {z} from "zod";
 import {OrderStatus} from "generated/prisma/enums";
 
 export const ASSISTANT_INTENTS = {
-  HELP: "help",
+  HELP: "help", //
+  UNKNOWN: "unknown", //
   GET_ORDER: "get_order",
   LIST_ORDERS: "list_orders",
-  RECORD_ORDER: "record_order",
+  RECORD_ORDER: "record_order", //
   SEND_REMINDER: "send_reminder",
   MARK_ORDER_PAID: "mark_order_paid",
   FINANCIAL_REPORT: "financial_report",
   SCHEDULE_REMINDER: "schedule_reminder",
   UPDATE_ORDER_STATUS: "update_order_status",
   SEND_CUSTOMER_MESSAGE: "send_customer_message",
-  UNKNOWN: "unknown",
 };
 
 export type AssistantIntentName = typeof ASSISTANT_INTENTS;

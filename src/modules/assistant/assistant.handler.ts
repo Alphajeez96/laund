@@ -91,6 +91,7 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
 
 const handleHelp: AssistantIntentHandler = async () => ({
   replyText:
+    "Hi Champ, what would you like to do? \n" +
     "Try:\n" +
     '- "record a new order for 08023... 2 shirts, 3 shorts, totalling 10000 naira. pickup tomorrow"\n' +
     '- "list pending orders"\n' +
@@ -133,12 +134,6 @@ function formatMoney(v: unknown): string {
   if (!Number.isFinite(n)) return String(v);
   return n.toFixed(2);
 }
-
-const handleUnknown: AssistantIntentHandler = async (_ctx, envelope) => ({
-  replyText:
-    envelope.reply ||
-    "What would you like to do? For example: record an order, list orders, or get a revenue report.",
-});
 
 const handleListOrders: AssistantIntentHandler = async (ctx, envelope) => {
   const parsed = ListOrdersArgsSchema.safeParse(envelope.args);
@@ -380,7 +375,7 @@ const handleScheduleReminder: AssistantIntentHandler = async (
 
 export const assistantIntentHandlers: Record<string, AssistantIntentHandler> = {
   [ASSISTANT_INTENTS.HELP]: handleHelp,
-  [ASSISTANT_INTENTS.UNKNOWN]: handleUnknown,
+  [ASSISTANT_INTENTS.UNKNOWN]: handleHelp,
   [ASSISTANT_INTENTS.GET_ORDER]: handleGetOrder,
   [ASSISTANT_INTENTS.LIST_ORDERS]: handleListOrders,
   [ASSISTANT_INTENTS.RECORD_ORDER]: handleRecordOrder,
