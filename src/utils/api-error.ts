@@ -1,24 +1,35 @@
+type UpstreamErrorMeta = {
+  context: string;
+  url: string;
+  method: string;
+  status: number;
+  body: unknown;
+  raw: string;
+};
+
+type ApiErrorOptions = {
+  isOperational?: boolean;
+  errors?: {path: string; message: string}[];
+  upstream?: UpstreamErrorMeta;
+};
+
 class ApiError extends Error {
   statusCode: number;
   isOperational: boolean;
   errors: {path: string; message: string}[] | undefined;
+  upstream?: UpstreamErrorMeta;
 
   constructor(
     statusCode: number,
     message: string | undefined,
-    isOperational = true,
-    stack = "",
-    errors?: {path: string; message: string}[],
+    options?: ApiErrorOptions,
   ) {
     super(message);
     this.statusCode = statusCode;
-    this.isOperational = isOperational;
-    this.errors = errors;
-    if (stack) {
-      this.stack = stack;
-    } else {
-      Error.captureStackTrace(this, this.constructor);
-    }
+    this.errors = options?.errors;
+    this.isOperational = options?.isOperational ?? true;
+    this.upstream = options?.upstream;
+    Error.captureStackTrace(this, this.constructor);
   }
 }
 

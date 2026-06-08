@@ -17,13 +17,9 @@ export async function zParse<T extends ZodObject>(
         message: err.message,
       }));
 
-      throw new ApiError(
-        httpStatus.BAD_REQUEST,
-        "Invalid request data",
-        true,
-        undefined,
-        validationErrors,
-      );
+      throw new ApiError(httpStatus.BAD_REQUEST, "Invalid request data", {
+        errors: validationErrors,
+      });
     }
     throw new ApiError(httpStatus.BAD_REQUEST, "Invalid request data");
   }

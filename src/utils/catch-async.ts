@@ -51,8 +51,16 @@ const buildRequestBody = (
   headers: Headers,
 ): RequestInit["body"] => {
   if (!body) return undefined;
-  if (body instanceof URLSearchParams && !headers.has("Content-Type")) {
-    headers.set("Content-Type", "application/x-www-form-urlencoded");
+  if (!headers.has("Content-Type")) {
+    if (body instanceof URLSearchParams) {
+      headers.set("Content-Type", "application/x-www-form-urlencoded");
+    } else if (
+      typeof body === "string" &&
+      body.length > 0 &&
+      (body.startsWith("{") || body.startsWith("["))
+    ) {
+      headers.set("Content-Type", "application/json");
+    }
   }
   return body;
 };
@@ -80,9 +88,21 @@ export const requestJson = async <T>(
 
   const raw = await res.text();
   const parsed = JSON.parse(raw);
+
   if (!res.ok || parsed.status === "error") {
-    throw new Error(
+    throw new ApiError(
+      res.status,
       `${context} failed: ${res.status} ${parsed.message ?? raw.slice(0, 200)}`,
+      {
+        upstream: {
+          raw,
+          method,
+          context,
+          body: parsed,
+          url: finalUrl,
+          status: res.status,
+        },
+      },
     );
   }
 
