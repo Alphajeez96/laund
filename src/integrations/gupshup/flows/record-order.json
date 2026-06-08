@@ -2,7 +2,7 @@
   "version": "7.3",
   "screens": [
     {
-      "id": "CONFIRM_ITEMS",
+      "id": "RECORD_ORDER",
       "title": "Confirm Items",
       "data": {
         "items_source": {

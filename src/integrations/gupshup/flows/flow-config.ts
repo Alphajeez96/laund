@@ -4,8 +4,8 @@ const FLOW_CONFIG = {
     screen: "BUSINESS_ONBOARDING",
   },
   RECORD_ORDER: {
-    id: "RECORD_ORDER_FLOW_ID", // TODO: replace with published Gupshup flow ID
-    screen: "CONFIRM_ITEMS",
+    id: "1564637531939451",
+    screen: "RECORD_ORDER",
   },
 };
 
