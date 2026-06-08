@@ -51,7 +51,8 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
         customerPhone: null,
       };
 
-  const items = args.items && args.items.length > 0 ? args.items : null;
+  const items = args?.items ?? [];
+
   if (!items || items.length === 0) {
     return {
       replyText:
@@ -63,25 +64,26 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
   await MessagingService.sendFlow({
     to: ctx.fromE164,
     cta: "Continue",
+    header: "Confirm Order",
     flowId: FLOW_CONFIG.RECORD_ORDER.id,
     screen: FLOW_CONFIG.RECORD_ORDER.screen,
-    header: "Confirm Order",
     body: "Review the items and fill in any missing details.",
     screenData: {
       items_source: items.map((item, i) => ({
         id: String(i),
         title: item.itemName,
-        description: `${item.quantity} piece${item.quantity > 1 ? "s" : ""}`,
-        image: getItemIcon(item.itemName),
         "alt-text": item.itemName,
+        image: getItemIcon(item.itemName),
+        description: `${item.quantity} piece${item.quantity > 1 ? "s" : ""}`,
       })),
-      confirmed_items: items.map((_, i) => String(i)),
+
+      time_slot: args.timeSlot ?? "",
       items_json: JSON.stringify(items),
+      pickup_date: args.pickupDate ?? "",
+      total_amount: args.totalAmount ?? null,
       customer_name: args.customerName ?? "",
       customer_phone: args.customerPhone ?? "",
-      pickup_date: args.pickupDate ?? "",
-      time_slot: args.timeSlot ?? "",
-      total_amount: args.totalAmount ?? null,
+      confirmed_items: items.map((_, i) => String(i)),
       min_date: new Date().toISOString().slice(0, 10),
     },
   });
