@@ -50,7 +50,6 @@ export const interpretMessage = async (text: string): Promise<LlmEnvelope> => {
 
     const raw = res.message?.content ?? "";
     logger("LLM RESP", raw);
-
     return LlmEnvelopeSchema.parse(JSON.parse(raw));
   } catch (err) {
     return unknownFallback(

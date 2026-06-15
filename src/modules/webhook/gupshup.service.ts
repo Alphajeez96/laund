@@ -1,20 +1,13 @@
 import config from "@/config/config";
 import logger from "@/utils/logger";
-import {LaundryRepository} from "@/modules/laundry/laundry.repository";
-import {
-  // isGupshupSystemEventBody,
-  // isGupshupV3WebhookBody,
-  type GupshupSystemEventBody,
-  type GupshupV3WebhookBody,
-} from "./gupshup.types";
-import {LaundryService} from "../laundry/laundry.service";
-import {LaundryStatus} from "generated/prisma/enums";
+import {type GupshupV3WebhookBody} from "./gupshup.types";
 import {MessagingService} from "../messaging/messaging.service";
 import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
-import {flowHandlers} from "@/integrations/gupshup/flows/flow.handlers";
 import {inboundWaFromToE164, toNationalDigits} from "@/utils/phone";
 import {interpretMessage} from "@/modules/assistant/assistant.service";
-import {executeAssistantIntent} from "@/modules/assistant/assistant.router";
+import {LaundryRepository} from "@/modules/laundry/laundry.repository";
+import {assistantIntentHandlers} from "../assistant/assistant.handler";
+import {flowHandlers} from "@/integrations/gupshup/flows/flow.handlers";
 
 type IngestInput = {
   receivedAtMs: number;
@@ -23,24 +16,6 @@ type IngestInput = {
 };
 
 // type IngestInput = GupshupV3WebhookBody | GupshupSystemEventBody;
-
-// const parseOrderItems = (
-//   text: string,
-// ): Array<{itemName: string; quantity: number}> => {
-//   // Minimal MVP parser:
-//   // - extract patterns like "3 shirts", "2 trousers"
-//   // - ignore if nothing matches -> fallback handled by caller
-//   const items: Array<{itemName: string; quantity: number}> = [];
-//   const re = /(?:^|,|\s)(\d{1,3})\s+([a-zA-Z][a-zA-Z ]{1,40})/g;
-//   for (const m of text.matchAll(re)) {
-//     const qty = Number(m[1]);
-//     const name = m[2].trim().replace(/\s+/g, " ");
-//     if (Number.isFinite(qty) && qty > 0 && name.length > 0) {
-//       items.push({itemName: name.slice(0, 500), quantity: qty});
-//     }
-//   }
-//   return items;
-// };
 
 const handleFlowResponse = async (args: {
   from: string;
@@ -110,7 +85,13 @@ const handleTextMessage = async (args: {
   //   });
   // }
 
-  const result = await executeAssistantIntent(
+  const handler = assistantIntentHandlers[envelope.intent];
+
+  if (!handler) {
+    logger("Unhandled intent", {args, envelope});
+  }
+
+  const result = await handler(
     {laundry: args.laundry, fromE164: args.from, text: args.text},
     envelope,
   );
