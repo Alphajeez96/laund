@@ -38,14 +38,12 @@ export const interpretMessage = async (text: string): Promise<LlmEnvelope> => {
 
     const res = await ollama.chat({
       model: config.activeLLM,
+      options: {temperature: 0},
+      format: assistantFormatSchema,
       messages: [
         {role: "system", content: systemPrompt},
         {role: "user", content: text},
       ],
-      format: assistantFormatSchema,
-      options: {
-        temperature: 0,
-      },
     });
 
     const raw = res.message?.content ?? "";
