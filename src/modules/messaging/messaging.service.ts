@@ -4,6 +4,11 @@ import {requestAppJson} from "@/utils/catch-async";
 import {toWhatsAppRecipientDigits} from "@/utils/phone";
 import type {MediaType} from "@/integrations/gupshup/types";
 
+const defaults= {
+  recipient_type: "individual",
+  messaging_product: "whatsapp",
+}
+
 interface OutboundMessage {
   to: string;
   appId?: string;
@@ -16,7 +21,7 @@ type OutboundFlowMessage = {
   body: string;
   appId?: string;
   flowId: string;
-  header?: string;
+  header?: Record<string, unknown>;
   footer?: string;
   fallbackText?: string;
 } & (
@@ -31,16 +36,24 @@ type OutboundMediaMessage = {
   mediaType?: MediaType;
 } & ({id: string; link?: never} | {id?: never; link: string});
 
+type OutboundInteractiveMessage = {
+  to: string;
+  body: string;
+  appId?: string;
+  footer?: string;
+  header?: Record<string, unknown>;
+  buttons: {id: string; title: string}[];
+};
+
 const sendText = async ({
   to,
   message,
   appId = config.residentAppId,
 }: OutboundMessage) => {
   const payload = {
+    ...defaults,
     type: "text",
     text: {body: message},
-    recipient_type: "individual",
-    messaging_product: "whatsapp",
     to: toWhatsAppRecipientDigits(to),
   };
 
@@ -69,9 +82,8 @@ const sendFlow = async ({
   };
 
   const payload = {
+    ...defaults,
     type: "interactive",
-    recipient_type: "individual",
-    messaging_product: "whatsapp",
     to: toWhatsAppRecipientDigits(data.to),
     interactive: {
       type: "flow",
@@ -121,9 +133,8 @@ const sendMedia = async ({
   ...data
 }: OutboundMediaMessage) => {
   const payload = {
+    ...defaults,
     type: mediaType,
-    recipient_type: "individual",
-    messaging_product: "whatsapp",
     to: toWhatsAppRecipientDigits(data.to),
     [mediaType]: {
       caption: data.caption,
@@ -143,8 +154,42 @@ const sendMedia = async ({
   }
 };
 
+const sendInteractiveMessage = async ({
+  appId = config.residentAppId,
+  ...data
+}: OutboundInteractiveMessage) => {
+  const payload = {
+    ...defaults,
+    type: "interactive",
+    to: toWhatsAppRecipientDigits(data.to),
+    interactive: {
+      type: "button",
+      body: {text: data.body},
+      action: {
+        buttons: data.buttons.map(({id, title}) => ({
+          type: "reply",
+          reply: {id, title},
+        })),
+      },
+      ...(data?.header ? {header: data.header} : {}),
+      ...(data?.footer ? {footer: {text: data.footer}} : {}),
+    },
+  };
+
+  try {
+    return await handleSendAction({
+      appId,
+      payload,
+      context: "send interactive message",
+    });
+  } catch {
+    logger("sendInteractiveMessage failed", {appId, ...payload});
+  }
+};
+
 export const MessagingService = {
   sendText,
   sendFlow,
   sendMedia,
+  sendInteractiveMessage,
 };

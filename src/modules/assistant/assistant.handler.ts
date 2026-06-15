@@ -64,7 +64,7 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
   await MessagingService.sendFlow({
     to: ctx.fromE164,
     cta: "Continue",
-    header: "Confirm Order",
+    header: {type: "text", text: "Confirm Order"},
     flowId: FLOW_CONFIG.RECORD_ORDER.id,
     screen: FLOW_CONFIG.RECORD_ORDER.screen,
     body: "Review the items and fill in any missing details.",

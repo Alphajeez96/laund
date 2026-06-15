@@ -1,5 +1,6 @@
 import config from "@/config/config";
 import logger from "@/utils/logger";
+import type {Laundry} from "generated/prisma/client";
 import {isValidPhoneNumber} from "libphonenumber-js";
 import FLOW_CONFIG from "./flow-config";
 import {inboundWaFromToE164, toE164, toLocalE164} from "@/utils/phone";
@@ -13,6 +14,7 @@ import {uploadMedia} from "@/integrations/gupshup/media-ops";
 export type FlowHandler = (args: {
   from: string;
   screen: string;
+  laundry: Laundry;
   response: Record<string, unknown>;
 }) => Promise<void>;
 
@@ -49,6 +51,7 @@ const handleSignupFlow: FlowHandler = async (args) => {
     name: data.laundry_name,
   });
 
+  // add send option to suggest them seting up their inventory stock together with this,
   MessagingService.sendText({
     to: inboundWaFromToE164(args.from),
     message:
@@ -75,19 +78,18 @@ const handleSignupFlow: FlowHandler = async (args) => {
   // TODO: create Gupshup app + generate embed link for WABA onboarding
 };
 
-type OrderFlowItem = {itemName: string; quantity: number};
-
 const handleRecordOrderFlow: FlowHandler = async (args) => {
   const data = args.response as {
+    items_json: string;
+    pickup_date: string;
+    total_amount: string;
     customer_name: string;
     customer_phone: string;
-    pickup_date: string;
     time_slot: string | null;
-    total_amount: string;
-    items_json: string;
   };
 
   const customerE164 = toE164(data.customer_phone);
+
   if (!isValidPhoneNumber(customerE164)) {
     logger("[flow-record-order] invalid customer phone", {
       customer_phone: data.customer_phone,
@@ -95,33 +97,27 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     return;
   }
 
-  const items: OrderFlowItem[] = (() => {
-    try {
-      return JSON.parse(data.items_json) as OrderFlowItem[];
-    } catch {
-      return [];
-    }
-  })();
+  const items = JSON.parse(data.items_json) as {
+    itemName: string;
+    quantity: number;
+  }[];
 
   if (items.length === 0) {
     logger("[flow-record-order] no items in submission", {data});
     return;
   }
 
+  const laundryId = args.laundry.id;
   const fromE164 = inboundWaFromToE164(args.from);
-  const laundry = await LaundryRepository.findByContact(fromE164);
-  if (!laundry) {
-    logger("[flow-record-order] no laundry found for", {from: args.from});
-    return;
-  }
 
   let customer = await CustomerRepository.findByLaundryAndPhoneNumber(
-    laundry.id,
+    laundryId,
     customerE164,
   );
+
   if (!customer) {
     customer = await CustomerRepository.createCustomer({
-      laundryId: laundry.id,
+      laundryId: laundryId,
       phoneNumber: customerE164,
       name: data.customer_name || undefined,
     });
@@ -132,15 +128,18 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     : undefined;
 
   const order = await OrderService.createOrder({
-    laundryId: laundry.id,
+    laundryId,
     customerId: customer.id,
     pickupDate: data.pickup_date || undefined,
     totalAmount: Number.isFinite(totalAmount) ? totalAmount : undefined,
-    orderItems: items.map((it) => ({
-      itemName: it.itemName,
-      quantity: it.quantity,
+    orderItems: items.map(({itemName, quantity}) => ({
+      itemName,
+      quantity,
     })),
   });
+
+  // generate receipt,
+  // send tips to user?
 
   const shortId = order.id.slice(0, 8);
   const itemSummary = order.orderItems
@@ -148,14 +147,33 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     .join(", ");
 
   const timeInfo = data.pickup_date
-    ? `. Pickup: ${data.pickup_date}${data.time_slot ? ` @ ${data.time_slot}` : ""}`
+    ? `Pickup: ${data.pickup_date}${data.time_slot ? ` @ ${data.time_slot}` : ""}`
     : "";
 
   await MessagingService.sendText({
     to: fromE164,
     message:
-      `Recorded order ${shortId} for ${customer.phoneNumber}. ` +
-      `Items: ${itemSummary}${timeInfo}`,
+      `Recorded order ${shortId} for ${(data.customer_name || customer?.name) ?? data.customer_phone}. ` +
+      `Items: ${itemSummary}\n` +
+      `${timeInfo}`,
+  });
+
+  const message =
+    `Recorded order ${shortId} for ${(data.customer_name || customer?.name) ?? data.customer_phone}. ` +
+    `Items: ${itemSummary}\n` +
+    `${timeInfo}`;
+
+
+  await MessagingService.sendInteractiveMessage({
+    to: fromE164,
+    body: message,
+    footer:
+      "Click to have us send the invoice to the user or simply forward the attached document yourself",
+    header: {
+      type: "document",
+      document: {id: "media-id-here"},
+    },
+    buttons: [{id: "send-invoice", title: "Send Invoice"}],
   });
 };
 

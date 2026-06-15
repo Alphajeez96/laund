@@ -48,6 +48,15 @@ const handleFlowResponse = async (args: {
   screen: string;
   response: Record<string, unknown>;
 }) => {
+  const fromE164 = inboundWaFromToE164(args.from);
+  const laundry = await LaundryRepository.findByContact(fromE164);
+
+  if (!laundry) {
+    logger("[flow-record-order] no laundry found for", {from: args.from});
+    sendSignupFlow(fromE164);
+    return;
+  }
+
   const handler = flowHandlers[args.flowId];
 
   if (!handler) {
@@ -56,19 +65,20 @@ const handleFlowResponse = async (args: {
   }
 
   await handler({
+    laundry,
     from: args.from,
     screen: args.screen,
     response: args.response,
   });
 };
 
-const sendSignupFlow = async (to: string, contactName: string) => {
+const sendSignupFlow = async (to: string, contactName?: string) => {
   await MessagingService.sendFlow({
     to,
     cta: "Get started",
     flowId: FLOW_CONFIG.SIGN_UP.id,
     screen: FLOW_CONFIG.SIGN_UP.screen,
-    header: `Hi ${contactName ?? "Champ"}!`,
+    header: {type: "text", text: `Hi ${contactName ?? "Champ"}!`},
     body:
       "🧺 Meet Ezar — your laundry's new right hand.\n\n" +
       "• Track orders\n" +
