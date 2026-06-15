@@ -1,5 +1,5 @@
 import {z} from "zod";
-import {isValidPhoneNumber} from "libphonenumber-js";
+import {toE164} from "@/utils/phone";
 import {LaundryStatus} from "generated/prisma/enums";
 
 export const getLaundryParamsSchema = z.object({
@@ -15,7 +15,7 @@ export const createLaundrySchema = z.object({
     status: z.enum(LaundryStatus).optional(),
     whatsappNumber: z
       .string()
-      .refine((v) => isValidPhoneNumber(v), "Invalid phone number"),
+      .refine((v) => !!toE164(v), "Invalid phone number"),
   }),
 });
 
@@ -33,7 +33,7 @@ export const updateLaundrySchema = z.object({
       email: z.email().optional(),
       whatsappNumber: z
         .string()
-        .refine((v) => isValidPhoneNumber(v), "Invalid phone number")
+        .refine((v) => !!toE164(v), "Invalid phone number")
         .optional(),
       namespace: z.string().optional(),
       status: z.enum(LaundryStatus).optional(),
@@ -41,7 +41,7 @@ export const updateLaundrySchema = z.object({
       contactName: z.string().optional(),
       contactNumber: z
         .string()
-        .refine((v) => isValidPhoneNumber(v), "Invalid phone number")
+        .refine((v) => !!toE164(v), "Invalid phone number")
         .optional(),
     })
     .refine((b) => Object.values(b).some((v) => v !== undefined), {

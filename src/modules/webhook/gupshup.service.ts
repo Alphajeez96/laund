@@ -1,9 +1,9 @@
 import config from "@/config/config";
 import logger from "@/utils/logger";
+import {toE164, toNationalDigits} from "@/utils/phone";
 import {type GupshupV3WebhookBody} from "./gupshup.types";
 import {MessagingService} from "../messaging/messaging.service";
 import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
-import {inboundWaFromToE164, toNationalDigits} from "@/utils/phone";
 import {interpretMessage} from "@/modules/assistant/assistant.service";
 import {LaundryRepository} from "@/modules/laundry/laundry.repository";
 import {assistantIntentHandlers} from "../assistant/assistant.handler";
@@ -23,12 +23,12 @@ const handleFlowResponse = async (args: {
   screen: string;
   response: Record<string, unknown>;
 }) => {
-  const fromE164 = inboundWaFromToE164(args.from);
-  const laundry = await LaundryRepository.findByContact(fromE164);
+  const fromDigits = toE164(args.from);
+  const laundry = await LaundryRepository.findByContact(fromDigits);
 
   if (!laundry) {
     logger("[flow-record-order] no laundry found for", {from: args.from});
-    sendSignupFlow(fromE164);
+    sendSignupFlow(fromDigits);
     return;
   }
 
@@ -98,8 +98,8 @@ const handleTextMessage = async (args: {
 
   if (result.replyText) {
     MessagingService.sendText({
+      to: args.from,
       message: result.replyText,
-      to: inboundWaFromToE164(args.from),
     });
   }
 
@@ -218,11 +218,11 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
       const contactName = value?.contacts?.[0]?.profile?.name ?? "";
       for (const msg of value?.messages ?? []) {
         if (msg.from) {
-          const fromE164 = inboundWaFromToE164(msg.from);
-          const laundry = await LaundryRepository.findByContact(fromE164);
+          const fromDigits = toE164(msg.from);
+          const laundry = await LaundryRepository.findByContact(fromDigits);
 
           if (!laundry) {
-            await sendSignupFlow(fromE164, contactName);
+            await sendSignupFlow(fromDigits, contactName);
             continue;
           }
 
@@ -230,7 +230,7 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
           if (msg.type === "text" && msg.text?.body) {
             await handleTextMessage({
               laundry,
-              // from: fromE164,
+              // from: fromDigits,
               from: "2348030000011",
               text: msg.text.body,
             });

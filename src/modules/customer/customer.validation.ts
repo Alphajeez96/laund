@@ -1,13 +1,11 @@
 import {z} from "zod";
-import {isValidPhoneNumber} from "libphonenumber-js";
+import {toE164} from "@/utils/phone";
 
 export const createCustomerSchema = z.object({
   body: z.object({
     name: z.string().min(1).max(100).optional(),
     laundryId: z.uuid("Laundry ID must be a valid UUID"),
-    phoneNumber: z
-      .string()
-      .refine((v) => isValidPhoneNumber(v), "Invalid phone number"),
+    phoneNumber: z.string().refine((v) => !!toE164(v), "Invalid phone number"),
   }),
 });
 

@@ -1,15 +1,13 @@
-import config from "@/config/config";
 import logger from "@/utils/logger";
-import type {Laundry} from "generated/prisma/client";
-import {isValidPhoneNumber} from "libphonenumber-js";
+import {toE164} from "@/utils/phone";
 import FLOW_CONFIG from "./flow-config";
-import {inboundWaFromToE164, toE164, toLocalE164} from "@/utils/phone";
+import type {Laundry} from "generated/prisma/client";
 import {LaundryStatus} from "generated/prisma/enums";
-import {LaundryRepository} from "@/modules/laundry/laundry.repository";
-import {CustomerRepository} from "@/modules/customer/customer.repository";
 import {OrderService} from "@/modules/order/order.service";
 import {MessagingService} from "@/modules/messaging/messaging.service";
-import {uploadMedia} from "@/integrations/gupshup/media-ops";
+import {LaundryRepository} from "@/modules/laundry/laundry.repository";
+import {CustomerRepository} from "@/modules/customer/customer.repository";
+// import {uploadMedia} from "@/integrations/gupshup/media-ops";
 
 export type FlowHandler = (args: {
   from: string;
@@ -25,7 +23,7 @@ const handleSignupFlow: FlowHandler = async (args) => {
     contact_number: string;
   };
 
-  const whatsappNumber = toLocalE164(data.contact_number);
+  const whatsappNumber = toE164(data.contact_number);
   const existing = await LaundryRepository.findByContact(whatsappNumber);
 
   if (existing) {
@@ -53,7 +51,7 @@ const handleSignupFlow: FlowHandler = async (args) => {
 
   // add send option to suggest them seting up their inventory stock together with this,
   MessagingService.sendText({
-    to: inboundWaFromToE164(args.from),
+    to: args.from,
     message:
       "🎉 You're all set Champ! Welcome to Ezar.\n\n" +
       "To get started, simply send your first order message. Example:\n" +
@@ -88,9 +86,9 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     time_slot: string | null;
   };
 
-  const customerE164 = toE164(data.customer_phone);
+  const customerDigits = toE164(data.customer_phone);
 
-  if (!isValidPhoneNumber(customerE164)) {
+  if (!customerDigits) {
     logger("[flow-record-order] invalid customer phone", {
       customer_phone: data.customer_phone,
     });
@@ -109,17 +107,17 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
   }
 
   const laundryId = args.laundry.id;
-  const fromE164 = inboundWaFromToE164(args.from);
+  const fromDigits = toE164(args.from);
 
   let customer = await CustomerRepository.findByLaundryAndPhoneNumber(
     laundryId,
-    customerE164,
+    customerDigits,
   );
 
   if (!customer) {
     customer = await CustomerRepository.createCustomer({
       laundryId: laundryId,
-      phoneNumber: customerE164,
+      phoneNumber: customerDigits,
       name: data.customer_name || undefined,
     });
   }
@@ -151,8 +149,9 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     ? `Pickup: ${data.pickup_date}${data.time_slot ? ` @ ${data.time_slot}` : ""}`
     : "";
 
+  //condense into one with the interactive message
   await MessagingService.sendText({
-    to: fromE164,
+    to: fromDigits,
     message:
       `Recorded order ${shortId} for ${(data.customer_name || customer?.name) ?? data.customer_phone}. ` +
       `Items: ${itemSummary}\n` +
@@ -165,7 +164,7 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     `${timeInfo}`;
 
   await MessagingService.sendInteractiveMessage({
-    to: fromE164,
+    to: fromDigits,
     body: message,
     footer:
       "Click to have us send the invoice to the user or simply forward the attached document yourself",

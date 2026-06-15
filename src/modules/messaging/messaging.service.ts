@@ -1,13 +1,13 @@
 import config from "@/config/config";
 import logger from "@/utils/logger";
+import {toE164} from "@/utils/phone";
 import {requestAppJson} from "@/utils/catch-async";
-import {toWhatsAppRecipientDigits} from "@/utils/phone";
 import type {MediaType} from "@/integrations/gupshup/types";
 
-const defaults= {
+const defaults = {
   recipient_type: "individual",
   messaging_product: "whatsapp",
-}
+};
 
 interface OutboundMessage {
   to: string;
@@ -45,16 +45,32 @@ type OutboundInteractiveMessage = {
   buttons: {id: string; title: string}[];
 };
 
+const handleSendAction = async ({
+  appId,
+  context,
+  payload,
+}: {
+  appId: string;
+  context: string;
+  payload: Record<string, any>;
+}) => {
+  return requestAppJson(appId, `app/${appId}/v3/message`, {
+    context,
+    method: "POST",
+    body: JSON.stringify({...payload, to: toE164(payload.to)}),
+  });
+};
+
 const sendText = async ({
   to,
   message,
   appId = config.residentAppId,
 }: OutboundMessage) => {
   const payload = {
+    to,
     ...defaults,
     type: "text",
     text: {body: message},
-    to: toWhatsAppRecipientDigits(to),
   };
 
   try {
@@ -83,8 +99,8 @@ const sendFlow = async ({
 
   const payload = {
     ...defaults,
+    to: data.to,
     type: "interactive",
-    to: toWhatsAppRecipientDigits(data.to),
     interactive: {
       type: "flow",
       body: {text: data.body},
@@ -111,22 +127,6 @@ const sendFlow = async ({
   }
 };
 
-const handleSendAction = async ({
-  appId,
-  context,
-  payload,
-}: {
-  appId: string;
-  context: string;
-  payload: unknown;
-}) => {
-  return requestAppJson(appId, `app/${appId}/v3/message`, {
-    context,
-    method: "POST",
-    body: JSON.stringify(payload),
-  });
-};
-
 const sendMedia = async ({
   mediaType = "image",
   appId = config.residentAppId,
@@ -134,8 +134,8 @@ const sendMedia = async ({
 }: OutboundMediaMessage) => {
   const payload = {
     ...defaults,
+    to: data.to,
     type: mediaType,
-    to: toWhatsAppRecipientDigits(data.to),
     [mediaType]: {
       caption: data.caption,
       ...(data?.id ? {id: data.id} : {}),
@@ -160,8 +160,8 @@ const sendInteractiveMessage = async ({
 }: OutboundInteractiveMessage) => {
   const payload = {
     ...defaults,
+    to: data.to,
     type: "interactive",
-    to: toWhatsAppRecipientDigits(data.to),
     interactive: {
       type: "button",
       body: {text: data.body},

@@ -1,14 +1,11 @@
-import httpStatus from "http-status";
-import {isValidPhoneNumber} from "libphonenumber-js";
-import ApiError from "@/utils/api-error";
-import {toE164} from "@/utils/phone";
 import {prisma} from "@/lib/prisma";
-import {CustomerRepository} from "@/modules/customer/customer.repository";
-import {OrderRepository} from "@/modules/order/order.repository";
-import {OrderService} from "@/modules/order/order.service";
-import {MessagingService} from "@/modules/messaging/messaging.service";
-import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
 import {getItemIcon} from "@/utils/item-icons";
+import {toE164, toNationalDigits} from "@/utils/phone";
+import {OrderService} from "@/modules/order/order.service";
+import {OrderRepository} from "@/modules/order/order.repository";
+import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
+import {MessagingService} from "@/modules/messaging/messaging.service";
+
 import {
   FinancialReportArgsSchema,
   GetOrderArgsSchema,
@@ -74,7 +71,7 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
       pickup_date: args.pickupDate ?? "",
       total_amount: args.totalAmount ?? null,
       customer_name: args.customerName ?? "",
-      customer_phone: args.customerPhone ?? "",
+      customer_phone: toNationalDigits(args.customerPhone ?? ""),
       confirmed_items: items.map((_, i) => String(i)),
       min_date: new Date().toISOString().slice(0, 10),
       items_source: items.map((item, i) => ({
@@ -339,18 +336,18 @@ const handleSendCustomerMessage: AssistantIntentHandler = async (
     };
   }
 
-  const customerE164 = toE164(parsed.data.customerPhone);
-  if (!isValidPhoneNumber(customerE164)) {
+  const customerDigits = toE164(parsed.data.customerPhone);
+  if (!customerDigits) {
     return {
       replyText:
-        "That phone number doesn't look valid. Please send it in E.164 format, e.g. +234...",
+        "That phone number doesn't look valid. Please send a valid Nigerian number, e.g. 081xxxxxxxx or 23481xxxxxxxx.",
     };
   }
 
   return {
     replyText:
       "Outbound messaging is not wired up yet in this build. " +
-      `I captured your request to message ${customerE164}.`,
+      `I captured your request to message ${customerDigits}.`,
   };
 };
 
