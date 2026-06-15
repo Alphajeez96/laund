@@ -64,19 +64,11 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
   await MessagingService.sendFlow({
     to: ctx.fromE164,
     cta: "Continue",
-    header: {type: "text", text: "Confirm Order"},
     flowId: FLOW_CONFIG.RECORD_ORDER.id,
     screen: FLOW_CONFIG.RECORD_ORDER.screen,
-    body: "Review the items and fill in any missing details.",
+    header: {type: "text", text: "Confirm Order"},
+    body: "Please review the entry and fill in any missing detail",
     screenData: {
-      items_source: items.map((item, i) => ({
-        id: String(i),
-        title: item.itemName,
-        "alt-text": item.itemName,
-        image: getItemIcon(item.itemName),
-        description: `${item.quantity} piece${item.quantity > 1 ? "s" : ""}`,
-      })),
-
       time_slot: args.timeSlot ?? "",
       items_json: JSON.stringify(items),
       pickup_date: args.pickupDate ?? "",
@@ -85,6 +77,13 @@ const handleRecordOrder: AssistantIntentHandler = async (ctx, envelope) => {
       customer_phone: args.customerPhone ?? "",
       confirmed_items: items.map((_, i) => String(i)),
       min_date: new Date().toISOString().slice(0, 10),
+      items_source: items.map((item, i) => ({
+        id: String(i),
+        title: item.itemName,
+        "alt-text": item.itemName,
+        image: getItemIcon(item.itemName),
+        description: `${item.quantity} piece${item.quantity > 1 ? "s" : ""}`,
+      })),
     },
   });
 
