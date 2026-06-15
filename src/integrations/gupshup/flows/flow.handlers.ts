@@ -97,10 +97,11 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     return;
   }
 
-  const items = JSON.parse(data.items_json) as {
-    itemName: string;
-    quantity: number;
-  }[];
+  const items =
+    (JSON.parse(data.items_json) as {
+      itemName: string;
+      quantity: number;
+    }[]) || [];
 
   if (items.length === 0) {
     logger("[flow-record-order] no items in submission", {data});
@@ -162,7 +163,6 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     `Recorded order ${shortId} for ${(data.customer_name || customer?.name) ?? data.customer_phone}. ` +
     `Items: ${itemSummary}\n` +
     `${timeInfo}`;
-
 
   await MessagingService.sendInteractiveMessage({
     to: fromE164,
