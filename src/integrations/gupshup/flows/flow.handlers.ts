@@ -1,7 +1,7 @@
 import logger from "@/utils/logger";
 import {toE164} from "@/utils/phone";
 import FLOW_CONFIG from "./flow-config";
-import type {Laundry} from "generated/prisma/client";
+import {type Laundry} from "generated/prisma/client";
 import {LaundryStatus} from "generated/prisma/enums";
 import {OrderService} from "@/modules/order/order.service";
 import {MessagingService} from "@/modules/messaging/messaging.service";
@@ -122,9 +122,7 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     });
   }
 
-  const totalAmount = data.total_amount
-    ? Number.parseFloat(data.total_amount)
-    : undefined;
+  const totalAmount = Number.parseFloat(data.total_amount);
 
   const order = await OrderService.createOrder({
     laundryId,
