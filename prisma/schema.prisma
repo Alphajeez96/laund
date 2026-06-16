@@ -91,6 +91,7 @@ model Order {
   pickupDate DateTime?   @db.Date
   status     OrderStatus @default(pending)
   isPaid     Boolean     @default(false)
+  invoiceMediaId String? 
 
   totalAmount Decimal @default(0) @db.Decimal(18, 2)
 
