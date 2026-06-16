@@ -47,9 +47,12 @@ const checkLaundryExists = async (id: string) => {
   return laundry;
 };
 
+const generateInvoice = (data) => {};
+
 export const OrderService = {
   getOrder,
   listOrders,
   createOrder,
   updateOrder,
+  generateInvoice,
 };
