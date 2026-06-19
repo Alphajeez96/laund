@@ -58,6 +58,7 @@ const updateOrder = async (
     isPaid?: boolean;
     status?: OrderStatus;
     totalAmount?: number;
+    invoiceMediaId?: string;
   },
 ) => {
   return prisma.order.update({

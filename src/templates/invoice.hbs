@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; color: #1a1a1a; padding: 40px; }
+
+    .header {
+      display: flex; justify-content: space-between; align-items: start;
+      margin-bottom: 40px; padding-bottom: 20px; border-bottom: 2px solid #e5e7eb;
+      .laundry-name { font-size: 24px; font-weight: 700; color: #111827; }
+      .invoice-label { font-size: 32px; font-weight: 800; color: #374151; letter-spacing: -0.5px; }
+    }
+
+    .meta-grid { display: flex; justify-content: space-between; margin-bottom: 32px; }
+    .meta-section {
+      h3 { font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; margin-bottom: 8px; }
+      p { font-size: 15px; color: #1a1a1a; line-height: 1.6; }
+    }
+
+    .status-badge {
+      display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
+      background: #dbeafe; color: #1d4ed8; text-transform: capitalize;
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
+    th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; padding: 12px 8px; border-bottom: 2px solid #e5e7eb; }
+    td { padding: 14px 8px; border-bottom: 1px solid #f3f4f6; font-size: 15px; }
+    th:last-child, td:last-child { text-align: right; }
+    th:first-child, td:first-child { padding-left: 0; }
+
+    .total-row {
+      td { font-weight: 700; font-size: 17px; border-bottom: none; padding-top: 20px; }
+      td:last-child { font-size: 20px; color: #059669; }
+    }
+
+    .footer { margin-top: 48px; padding-top: 20px; border-top: 1px solid #e5e7eb; font-size: 13px; color: #9ca3af; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <div class="laundry-name">{{laundryName}}</div>
+    <div class="invoice-label">INVOICE</div>
+  </div>
+
+  <div class="meta-grid">
+    <div class="meta-section">
+      <h3>Order</h3>
+      <p>#{{orderShortId}}</p>
+      <p>{{orderDate}}</p>
+      <p><span class="status-badge">{{status}}</span></p>
+    </div>
+    <div class="meta-section" style="text-align:right">
+      <h3>Customer</h3>
+      <p>{{customerName}}</p>
+      <p>{{customerPhone}}</p>
+    </div>
+  </div>
+
+  <table>
+    <tr>
+      <th>Item</th>
+      <th style="text-align:center">Qty</th>
+      <th style="text-align:right">Amount</th>
+    </tr>
+    {{#each items}}
+    <tr>
+      <td>{{itemName}}</td>
+      <td style="text-align:center">{{quantity}}</td>
+      <td style="text-align:right">₦{{total}}</td>
+    </tr>
+    {{/each}}
+    <tr class="total-row">
+      <td colspan="2">Total</td>
+      <td>₦{{totalAmount}}</td>
+    </tr>
+  </table>
+
+  {{#if pickupDate}}
+  <p style="font-size:14px;color:#6b7280">Pickup: {{pickupDate}}</p>
+  {{/if}}
+
+  <div class="footer">Thank you for your patronage</div>
+</body>
+</html>

@@ -1,10 +1,25 @@
+import fs from "node:fs";
+import path from "node:path";
+import os from "node:os";
+import {format} from "date-fns";
+import Handlebars from "handlebars";
+import puppeteer from "puppeteer";
 import httpStatus from "http-status";
+import {Prisma} from "generated/prisma/client";
 import ApiError from "@/utils/api-error";
 import {OrderRepository} from "./order.repository";
 import type {ICreateOrder} from "./order.validation";
 import type {OrderStatus} from "generated/prisma/enums";
 import {LaundryRepository} from "../laundry/laundry.repository";
 import {CustomerRepository} from "../customer/customer.repository";
+import {uploadMedia} from "@/integrations/gupshup/media-ops";
+import config from "@/config/config";
+
+type OrderWithItemsAndCustomer = Prisma.OrderGetPayload<{
+  include: {customer: true; orderItems: true};
+}>;
+
+const TEMPLATE_PATH = path.resolve(process.cwd(), "src/templates/invoice.hbs");
 
 const createOrder = async (data: ICreateOrder) => {
   await checkLaundryExists(data.laundryId);
@@ -47,7 +62,60 @@ const checkLaundryExists = async (id: string) => {
   return laundry;
 };
 
-const generateInvoice = (data) => {};
+const generateInvoice = async (
+  order: OrderWithItemsAndCustomer,
+  laundry: {name: string; whatsappNumber: string},
+) => {
+  const template = fs.readFileSync(TEMPLATE_PATH, "utf-8");
+  const compiled = Handlebars.compile(template);
+
+  const html = compiled({
+    laundryName: laundry.name,
+    orderShortId: order.id.slice(0, 8).toUpperCase(),
+    orderDate: format(order.createdAt, "do MMMM, yyyy"),
+    status: order.status.replace(/_/g, " "),
+    customerName: order.customer.name ?? order.customer.phoneNumber,
+    customerPhone: order.customer.phoneNumber,
+    items: order.orderItems.map(({itemName, quantity, totalPrice}) => ({
+      itemName,
+      quantity,
+      total: Number(totalPrice).toLocaleString(),
+    })),
+    totalAmount: Number(order.totalAmount).toLocaleString(),
+    pickupDate: order.pickupDate
+      ? format(order.pickupDate, "do MMMM, yyyy")
+      : null,
+  });
+
+  const browser = await puppeteer.launch();
+  const page = await browser.newPage();
+  await page.setContent(html);
+
+  const tmpFile = path.join(os.tmpdir(), `invoice-${order.id.slice(0, 8)}.pdf`);
+  await page.pdf({
+    path: tmpFile,
+    format: "A4",
+    margin: {top: "20px", bottom: "20px"},
+  });
+  await browser.close();
+
+  const mediaId = await uploadMedia({
+    appId: config.residentAppId,
+    filePath: tmpFile,
+    mediaType: "document",
+  });
+
+  fs.unlinkSync(tmpFile);
+
+  if (!mediaId) {
+    throw new ApiError(
+      httpStatus.INTERNAL_SERVER_ERROR,
+      "Failed to upload invoice PDF",
+    );
+  }
+
+  return OrderRepository.updateOrder(order.id, {invoiceMediaId: mediaId});
+};
 
 export const OrderService = {
   getOrder,
