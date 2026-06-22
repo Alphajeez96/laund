@@ -15,11 +15,11 @@ import {
   publishFlow,
   updateFlow,
   updateFlowJson,
-} from "@/integrations/gupshup/flow-ops";
+} from "@/integrations/gupshup/ops/flow-ops";
 import {
   getSubscriptions,
   updateSubscriptionUrl,
-} from "@/integrations/gupshup/subscription-ops";
+} from "@/integrations/gupshup/ops/subscription-ops";
 
 const DEFAULT_FLOW_JSON_PATH =
   "src/integrations/gupshup/flows/laundryops-signup.flow.json";
@@ -167,7 +167,8 @@ const main = async () => {
   }
 
   if (fnName === "updateSubscriptionUrl") {
-    if (!arg4) throw new Error("updateSubscriptionUrl requires: <subscriptionId>");
+    if (!arg4)
+      throw new Error("updateSubscriptionUrl requires: <subscriptionId>");
     if (!arg5) throw new Error("updateSubscriptionUrl requires: <newUrl>");
     const res = await updateSubscriptionUrl({
       appId,

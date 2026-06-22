@@ -1,19 +1,19 @@
 import fs from "node:fs";
-import path from "node:path";
 import os from "node:os";
+import path from "node:path";
 import {format} from "date-fns";
-import Handlebars from "handlebars";
 import puppeteer from "puppeteer";
+import Handlebars from "handlebars";
+import config from "@/config/config";
 import httpStatus from "http-status";
-import {Prisma, type Customer, type OrderItem} from "generated/prisma/client";
 import ApiError from "@/utils/api-error";
 import {OrderRepository} from "./order.repository";
 import type {ICreateOrder} from "./order.validation";
 import type {OrderStatus} from "generated/prisma/enums";
 import {LaundryRepository} from "../laundry/laundry.repository";
+import type {Customer, OrderItem} from "generated/prisma/client";
 import {CustomerRepository} from "../customer/customer.repository";
-import {uploadMedia} from "@/integrations/gupshup/media-ops";
-import config from "@/config/config";
+import {uploadMedia} from "@/integrations/gupshup/ops/media-ops";
 
 type InvoicePayload = {
   createdAt: Date;

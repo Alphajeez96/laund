@@ -1,5 +1,5 @@
+import {type PartnerAppTokenResponse} from "../types";
 import {requestPartnerJson, requestAppJson} from "@/utils/catch-async";
-import {type PartnerAppTokenResponse} from "./types";
 
 type ContactDetails = {
   appId: string;

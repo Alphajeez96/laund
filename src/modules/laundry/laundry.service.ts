@@ -3,10 +3,9 @@ import ApiError from "@/utils/api-error";
 import {
   createApp,
   generateEmbedLink,
-  setContactDetails,
-} from "@/integrations/gupshup/onboarding-ops";
+} from "@/integrations/gupshup/ops/onboarding-ops";
 import {LaundryRepository} from "../laundry/laundry.repository";
-import {setSubscription} from "@/integrations/gupshup/subscription-ops";
+import {setSubscription} from "@/integrations/gupshup/ops/subscription-ops";
 import {type ICreateLaundry, type IUpdateLaundry} from "./laundry.validation";
 
 type LaundryLookup = Parameters<typeof LaundryRepository.existsById>[0];

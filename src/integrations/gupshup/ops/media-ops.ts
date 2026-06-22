@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
+import type {MediaType} from "../types";
 import {requestAppJson} from "@/utils/catch-async";
-import type {MediaType} from "./types";
 
 export const uploadMedia = async ({
   appId,
