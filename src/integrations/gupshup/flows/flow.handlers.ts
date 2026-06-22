@@ -1,9 +1,11 @@
 import logger from "@/utils/logger";
+import {prisma} from "@/lib/prisma";
 import {toE164} from "@/utils/phone";
 import FLOW_CONFIG from "./flow-config";
 import {type Laundry} from "generated/prisma/client";
 import {LaundryStatus} from "generated/prisma/enums";
 import {OrderService} from "@/modules/order/order.service";
+import {OrderRepository} from "@/modules/order/order.repository";
 import {MessagingService} from "@/modules/messaging/messaging.service";
 import {LaundryRepository} from "@/modules/laundry/laundry.repository";
 import {CustomerRepository} from "@/modules/customer/customer.repository";
@@ -87,6 +89,7 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
   };
 
   const customerDigits = toE164(data.customer_phone);
+  const totalAmount = Number.parseFloat(data.total_amount);
 
   if (!customerDigits) {
     logger("[flow-record-order] invalid customer phone", {
@@ -122,9 +125,22 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     });
   }
 
-  const totalAmount = Number.parseFloat(data.total_amount);
+  const {invoiceRef} = await prisma.laundry.update({
+    where: {id: laundryId},
+    data: {invoiceRef: {increment: 1}},
+  });
 
-  const order = await OrderService.createOrder({
+  // generate / send invoice
+  const invoicePayload = {
+    customer,
+    totalAmount,
+    orderItems: items,
+    reference: invoiceRef,
+    createdAt: new Date(),
+    pickupDate: data.pickup_date,
+  };
+
+  const orderPayload = {
     laundryId,
     customerId: customer.id,
     pickupDate: data.pickup_date || undefined,
@@ -133,31 +149,32 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
       itemName,
       quantity,
     })),
-  });
+  };
+
+  const [invoiceResult, orderResult] = await Promise.allSettled([
+    OrderService.generateInvoice(invoicePayload, args.laundry),
+    OrderService.createOrder(orderPayload),
+  ]);
+
+  if (orderResult.status === "rejected") throw orderResult.reason;
+
+  const order = orderResult.value;
+  const invoiceId =
+    invoiceResult.status === "fulfilled" ? invoiceResult.value : "";
 
   // generate receipt,
   // send tips to user?
 
-  const shortId = order.id.slice(0, 8);
   const itemSummary = order.orderItems
-    .map((it) => `${it.quantity} ${it.itemName}`)
+    .map(({quantity, itemName}) => `${quantity} ${itemName}`)
     .join(", ");
 
   const timeInfo = data.pickup_date
     ? `Pickup: ${data.pickup_date}${data.time_slot ? ` @ ${data.time_slot}` : ""}`
     : "";
 
-  //condense into one with the interactive message
-  await MessagingService.sendText({
-    to: fromDigits,
-    message:
-      `Recorded order ${shortId} for ${(data.customer_name || customer?.name) ?? data.customer_phone}. ` +
-      `Items: ${itemSummary}\n` +
-      `${timeInfo}`,
-  });
-
   const message =
-    `Recorded order ${shortId} for ${(data.customer_name || customer?.name) ?? data.customer_phone}. ` +
+    `New entry added for ${(data.customer_name || customer?.name) ?? data.customer_phone}. ` +
     `Items: ${itemSummary}\n` +
     `${timeInfo}`;
 
@@ -165,13 +182,15 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
     to: fromDigits,
     body: message,
     footer:
-      "Click to have us send the invoice to the user or simply forward the attached document yourself",
+      "Click to have the invoice sent to the user or simply forward the attached document yourself",
     header: {
       type: "document",
-      document: {id: "media-id-here"},
+      document: {id: invoiceId},
     },
     buttons: [{id: "send-invoice", title: "Send Invoice"}],
   });
+
+  OrderRepository.updateOrder(order.id, {invoiceMediaId: invoiceId});
 };
 
 export const flowHandlers: Record<string, FlowHandler> = {

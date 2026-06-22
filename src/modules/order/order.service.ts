@@ -5,7 +5,7 @@ import {format} from "date-fns";
 import Handlebars from "handlebars";
 import puppeteer from "puppeteer";
 import httpStatus from "http-status";
-import {Prisma} from "generated/prisma/client";
+import {Prisma, type Customer, type OrderItem} from "generated/prisma/client";
 import ApiError from "@/utils/api-error";
 import {OrderRepository} from "./order.repository";
 import type {ICreateOrder} from "./order.validation";
@@ -15,9 +15,14 @@ import {CustomerRepository} from "../customer/customer.repository";
 import {uploadMedia} from "@/integrations/gupshup/media-ops";
 import config from "@/config/config";
 
-type OrderWithItemsAndCustomer = Prisma.OrderGetPayload<{
-  include: {customer: true; orderItems: true};
-}>;
+type InvoicePayload = {
+  createdAt: Date;
+  reference: number;
+  pickupDate: string;
+  totalAmount: number;
+  customer: Pick<Customer, "name" | "phoneNumber">;
+  orderItems: Pick<OrderItem, "itemName" | "quantity">[];
+};
 
 const TEMPLATE_PATH = path.resolve(process.cwd(), "src/templates/invoice.hbs");
 
@@ -63,23 +68,24 @@ const checkLaundryExists = async (id: string) => {
 };
 
 const generateInvoice = async (
-  order: OrderWithItemsAndCustomer,
+  order: InvoicePayload,
   laundry: {name: string; whatsappNumber: string},
 ) => {
   const template = fs.readFileSync(TEMPLATE_PATH, "utf-8");
   const compiled = Handlebars.compile(template);
 
+  const invoiceRef = String(order.reference).padStart(5, "0");
+
   const html = compiled({
+    invoiceRef,
     laundryName: laundry.name,
-    orderShortId: order.id.slice(0, 8).toUpperCase(),
-    orderDate: format(order.createdAt, "do MMMM, yyyy"),
-    status: order.status.replace(/_/g, " "),
-    customerName: order.customer.name ?? order.customer.phoneNumber,
+    createdAt: format(order.createdAt, "do MMMM, yyyy"),
+    customerName: order.customer.name,
     customerPhone: order.customer.phoneNumber,
-    items: order.orderItems.map(({itemName, quantity, totalPrice}) => ({
+    items: order.orderItems.map(({itemName, quantity}) => ({
       itemName,
       quantity,
-      total: Number(totalPrice).toLocaleString(),
+      // total: Number(totalPrice).toLocaleString(),
     })),
     totalAmount: Number(order.totalAmount).toLocaleString(),
     pickupDate: order.pickupDate
@@ -91,7 +97,7 @@ const generateInvoice = async (
   const page = await browser.newPage();
   await page.setContent(html);
 
-  const tmpFile = path.join(os.tmpdir(), `invoice-${order.id.slice(0, 8)}.pdf`);
+  const tmpFile = path.join(os.tmpdir(), `invoice-${invoiceRef}.pdf`);
   await page.pdf({
     path: tmpFile,
     format: "A4",
@@ -114,7 +120,7 @@ const generateInvoice = async (
     );
   }
 
-  return OrderRepository.updateOrder(order.id, {invoiceMediaId: mediaId});
+  return mediaId;
 };
 
 export const OrderService = {

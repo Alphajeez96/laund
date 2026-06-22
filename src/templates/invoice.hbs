@@ -19,11 +19,6 @@
       p { font-size: 15px; color: #1a1a1a; line-height: 1.6; }
     }
 
-    .status-badge {
-      display: inline-block; padding: 4px 12px; border-radius: 999px; font-size: 13px; font-weight: 600;
-      background: #dbeafe; color: #1d4ed8; text-transform: capitalize;
-    }
-
     table { width: 100%; border-collapse: collapse; margin-bottom: 24px; }
     th { text-align: left; font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: #6b7280; padding: 12px 8px; border-bottom: 2px solid #e5e7eb; }
     td { padding: 14px 8px; border-bottom: 1px solid #f3f4f6; font-size: 15px; }
@@ -47,9 +42,8 @@
   <div class="meta-grid">
     <div class="meta-section">
       <h3>Order</h3>
-      <p>#{{orderShortId}}</p>
-      <p>{{orderDate}}</p>
-      <p><span class="status-badge">{{status}}</span></p>
+      <p>#{{invoiceRef}}</p>
+      <p>{{createdAt}}</p>
     </div>
     <div class="meta-section" style="text-align:right">
       <h3>Customer</h3>
