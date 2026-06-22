@@ -32,7 +32,8 @@ type OutboundFlowMessage = {
 type OutboundMediaMessage = {
   to: string;
   appId?: string;
-  caption: string;
+  caption?: string;
+  fileName?: string;
   mediaType?: MediaType;
 } & ({id: string; link?: never} | {id?: never; link: string});
 
@@ -137,9 +138,10 @@ const sendMedia = async ({
     to: data.to,
     type: mediaType,
     [mediaType]: {
-      caption: data.caption,
       ...(data?.id ? {id: data.id} : {}),
       ...(data?.link ? {link: data.link} : {}),
+      ...(data?.caption && {caption: data?.caption}),
+      ...(data?.fileName && {filename: data?.fileName}),
     },
   };
 

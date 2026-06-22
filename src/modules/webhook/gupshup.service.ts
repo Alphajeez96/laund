@@ -1,13 +1,15 @@
 import config from "@/config/config";
 import logger from "@/utils/logger";
+import type {Laundry} from "generated/prisma/client";
 import {toE164, toNationalDigits} from "@/utils/phone";
-import {type GupshupV3WebhookBody} from "./gupshup.types";
 import {MessagingService} from "../messaging/messaging.service";
-import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
+import {FLOW_CONFIG} from "@/integrations/gupshup/flows/flow-config";
+import {MSG_TYPE, type GupshupV3WebhookBody} from "./gupshup.types";
 import {interpretMessage} from "@/modules/assistant/assistant.service";
 import {LaundryRepository} from "@/modules/laundry/laundry.repository";
 import {assistantIntentHandlers} from "../assistant/assistant.handler";
 import {flowHandlers} from "@/integrations/gupshup/flows/flow.handlers";
+import {interactiveHandlers} from "@/integrations/gupshup/interactive.handlers";
 
 type IngestInput = {
   receivedAtMs: number;
@@ -16,36 +18,6 @@ type IngestInput = {
 };
 
 // type IngestInput = GupshupV3WebhookBody | GupshupSystemEventBody;
-
-const handleFlowResponse = async (args: {
-  from: string;
-  flowId: string;
-  screen: string;
-  response: Record<string, unknown>;
-}) => {
-  const fromDigits = toE164(args.from);
-  const laundry = await LaundryRepository.findByContact(fromDigits);
-
-  if (!laundry) {
-    logger("[flow-record-order] no laundry found for", {from: args.from});
-    sendSignupFlow(fromDigits);
-    return;
-  }
-
-  const handler = flowHandlers[args.flowId];
-
-  if (!handler) {
-    logger("[webhook] no handler for flow", {flowId: args.flowId});
-    return;
-  }
-
-  await handler({
-    laundry,
-    from: args.from,
-    screen: args.screen,
-    response: args.response,
-  });
-};
 
 const sendSignupFlow = async (to: string, contactName?: string) => {
   await MessagingService.sendFlow({
@@ -69,10 +41,31 @@ const sendSignupFlow = async (to: string, contactName?: string) => {
   });
 };
 
+const handleFlowResponse = async (args: {
+  from: string;
+  flowId: string;
+  screen: string;
+  laundry: Laundry;
+  response: Record<string, unknown>;
+}) => {
+  const handler = flowHandlers[args.flowId];
+  if (!handler) {
+    logger("[webhook] no handler for flow", {flowId: args.flowId});
+    return;
+  }
+
+  await handler({
+    from: args.from,
+    screen: args.screen,
+    laundry: args.laundry,
+    response: args.response,
+  });
+};
+
 const handleTextMessage = async (args: {
   from: string;
   text: string;
-  laundry: {id: string; name: string; whatsappNumber: string};
+  laundry: Laundry;
 }) => {
   const envelope = await interpretMessage(args.text);
   logger("ENVELOPE", envelope);
@@ -143,44 +136,21 @@ const handleTextMessage = async (args: {
   // return order;
 };
 
-// const handleSystemEvent = async (body: GupshupSystemEventBody) => {
-//   // System events may come in as V2-style payloads, and include appId. ([partner-docs.gupshup.io](https://partner-docs.gupshup.io/docs/system-events))
-//   const appId = body.appId;
-//   if (!appId) {
-//     console.warn("[gupshup-webhook] system-event missing appId", body.type);
-//     return;
-//   }
+const handleInteractiveResponse = async (
+  args: {id: string; title: string},
+  laundry: Laundry,
+) => {
+  const deconstruct = args.id.split(":");
+  const data = JSON.parse(deconstruct[1]);
+  const handler = interactiveHandlers[deconstruct[0]];
 
-// const laundry = await LaundryRepository.existsById({appId});
-//   if (!laundry) {
-//     console.warn("[gupshup-webhook] no laundry for system event appId", appId);
-//     return;
-//   }
+  if (!handler) {
+    logger("[webhook] no handler for InteractiveResponse", {data, laundry});
+    return;
+  }
 
-//   if (body.type === "onboarding-event") {
-//     // Go-Live comes as onboarding-event with waId + namespace. ([partner-docs.gupshup.io](https://partner-docs.gupshup.io/docs/system-events))
-//     console.info("[gupshup-webhook] onboarding-event", {laundryId: laundry.id, body});
-//     // TODO: persist (wabaId/namespace/phone/live status) once those columns exist.
-//     return;
-//   }
-
-//   if (body.type === "template-event") {
-//     // Template approval/rejection events. ([partner-docs.gupshup.io](https://partner-docs.gupshup.io/docs/system-events))
-//     console.info("[gupshup-webhook] template-event", {laundryId: laundry.id, body});
-//     // TODO: persist template statuses once you add a Template table.
-//     return;
-//   }
-
-//   if (body.type === "account-event") {
-//     console.info("[gupshup-webhook] account-event", {laundryId: laundry.id, body});
-//     return;
-//   }
-
-//   console.info("[gupshup-webhook] unknown system event", {
-//     laundryId: laundry.id,
-//     type: body.type,
-//   });
-// };
+  await handler({...data, laundry});
+};
 
 const handleV3 = async (body: GupshupV3WebhookBody) => {
   const appId = body.gs_app_id;
@@ -227,8 +197,8 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
           }
 
           // Handle Texts
-          if (msg.type === "text" && msg.text?.body) {
-            await handleTextMessage({
+          if (msg.type === MSG_TYPE.TEXT && msg.text?.body) {
+            handleTextMessage({
               laundry,
               // from: fromDigits,
               from: "2348030000011",
@@ -237,13 +207,22 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
           }
 
           // Handle Flow messages
-          if (msg.type === "flow") {
-            await handleFlowResponse({
+          if (msg.type === MSG_TYPE.FLOW) {
+            handleFlowResponse({
+              laundry,
               from: msg.from,
               flowId: msg?.flow?.flow_id ?? "",
               screen: msg?.flow?.data?.screen ?? "",
               response: msg?.flow?.data?.response ?? {},
             });
+          }
+
+          // Handle Interactive Replies
+          if (
+            msg.type === MSG_TYPE.INTERACTIVE &&
+            msg.interactive?.button_reply?.id
+          ) {
+            handleInteractiveResponse(msg.interactive?.button_reply, laundry);
           }
         }
       }

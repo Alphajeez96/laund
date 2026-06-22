@@ -34,6 +34,10 @@ export interface GupshupV3WebhookBody {
               response: Record<string, unknown>;
             };
           };
+          interactive?: {
+            type: string;
+            button_reply: {id: string; title: string};
+          };
         }>;
 
         statuses?: Array<{
@@ -58,3 +62,9 @@ export interface GupshupSystemEventBody {
   version?: number;
   payload?: unknown;
 }
+
+export const MSG_TYPE = {
+  TEXT: "text",
+  FLOW: "flow",
+  INTERACTIVE: "interactive",
+} as const;

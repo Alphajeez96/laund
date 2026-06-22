@@ -1,10 +1,10 @@
 import logger from "@/utils/logger";
 import {prisma} from "@/lib/prisma";
 import {toE164} from "@/utils/phone";
-import FLOW_CONFIG from "./flow-config";
 import {type Laundry} from "generated/prisma/client";
 import {LaundryStatus} from "generated/prisma/enums";
 import {OrderService} from "@/modules/order/order.service";
+import {FLOW_CONFIG, INTERACTIVE_BUTTON} from "./flow-config";
 import {OrderRepository} from "@/modules/order/order.repository";
 import {MessagingService} from "@/modules/messaging/messaging.service";
 import {LaundryRepository} from "@/modules/laundry/laundry.repository";
@@ -187,7 +187,12 @@ const handleRecordOrderFlow: FlowHandler = async (args) => {
       type: "document",
       document: {id: invoiceId},
     },
-    buttons: [{id: "send-invoice", title: "Send Invoice"}],
+    buttons: [
+      {
+        title: "Send Invoice",
+        id: `${INTERACTIVE_BUTTON.SEND_INVOICE}:${JSON.stringify({phoneNumber: customer.phoneNumber, invoiceMediaId: invoiceId})}`,
+      },
+    ],
   });
 
   OrderRepository.updateOrder(order.id, {invoiceMediaId: invoiceId});

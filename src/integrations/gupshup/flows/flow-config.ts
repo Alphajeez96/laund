@@ -9,4 +9,8 @@ const FLOW_CONFIG = {
   },
 };
 
-export default FLOW_CONFIG;
+const INTERACTIVE_BUTTON = {
+  SEND_INVOICE: "send-invoice",
+} as const;
+
+export {FLOW_CONFIG, INTERACTIVE_BUTTON};
