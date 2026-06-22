@@ -43,6 +43,7 @@ model Laundry {
   status         LaundryStatus @default(sandbox)
   createdAt      DateTime      @default(now())
   updatedAt      DateTime      @updatedAt
+  invoiceRef     Int           @default(0)
 
   customers Customer[]
   orders    Order[]
@@ -85,13 +86,14 @@ model Customer {
 }
 
 model Order {
-  id         String      @id @default(uuid()) @db.Uuid
-  laundryId  String      @db.Uuid
-  customerId String      @db.Uuid
-  pickupDate DateTime?   @db.Date
-  status     OrderStatus @default(pending)
-  isPaid     Boolean     @default(false)
-  invoiceMediaId String? 
+  id             String      @id @default(uuid()) @db.Uuid
+  laundryId      String      @db.Uuid
+  customerId     String      @db.Uuid
+  pickupDate     DateTime?   @db.Date
+  status         OrderStatus @default(pending)
+  isPaid         Boolean     @default(false)
+  invoiceMediaId String?
+  invoiceRef     Int?
 
   totalAmount Decimal @default(0) @db.Decimal(18, 2)
 
