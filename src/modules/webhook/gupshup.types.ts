@@ -66,5 +66,6 @@ export interface GupshupSystemEventBody {
 export const MSG_TYPE = {
   TEXT: "text",
   FLOW: "flow",
+  AUDIO: "audio",
   INTERACTIVE: "interactive",
 } as const;

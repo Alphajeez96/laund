@@ -3,7 +3,7 @@ import {getItemIcon} from "@/utils/item-icons";
 import {toE164, toNationalDigits} from "@/utils/phone";
 import {OrderService} from "@/modules/order/order.service";
 import {OrderRepository} from "@/modules/order/order.repository";
-import FLOW_CONFIG from "@/integrations/gupshup/flows/flow-config";
+import {FLOW_CONFIG} from "@/integrations/gupshup/flows/flow-config";
 import {MessagingService} from "@/modules/messaging/messaging.service";
 
 import {

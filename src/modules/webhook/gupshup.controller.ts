@@ -18,7 +18,7 @@ const handle = (req: Request, res: Response) => {
 
   res.status(204).end();
 
-  logger("WEBHOOK GOTTEN", req.body);
+  // logger("WEBHOOK GOTTEN", req.body);
   // Process after ACK (never await inside the request).
   setImmediate(() => {
     void GupshupWebhookService.ingest({
