@@ -1,7 +1,7 @@
 import config from "@/config/config";
 import logger from "@/utils/logger";
+import {toNationalDigits} from "@/utils/phone";
 import type {Laundry} from "generated/prisma/client";
-import {toE164, toNationalDigits} from "@/utils/phone";
 import {MessagingService} from "../messaging/messaging.service";
 import {MSG_TYPE, type GupshupV3WebhookBody} from "./gupshup.types";
 import {FLOW_CONFIG} from "@/integrations/gupshup/flows/flow-config";
@@ -19,8 +19,6 @@ type IngestInput = {
   body: GupshupV3WebhookBody;
   headers: Record<string, unknown>;
 };
-
-// type IngestInput = GupshupV3WebhookBody | GupshupSystemEventBody;
 
 const sendSignupFlow = async (to: string, contactName?: string) => {
   await MessagingService.sendFlow({
@@ -108,35 +106,6 @@ const handleTextMessage = async (args: {
     missing: envelope.missing,
     // replyText: result.replyText,
   });
-
-  // const fromE164 = normalizePhone(args.from);
-  // if (!fromE164) return;
-  // // Find-or-create customer (unique is (laundryId, phoneNumber) in schema).
-  // let customer = await CustomerRepository.findByLaundryAndPhoneNumber(
-  //   args.laundryId,
-  //   fromE164,
-  // );
-  // if (!customer) {
-  //   customer = await CustomerRepository.createCustomer({
-  //     laundryId: args.laundryId,
-  //     phoneNumber: fromE164,
-  //     name: args.contactName,
-  //   });
-  // }
-  // // Create an order (must have >= 1 item in current validation).
-  // const parsedItems = parseOrderItems(args.text);
-  // const orderItems =
-  //   parsedItems.length > 0
-  //     ? parsedItems
-  //     : [{itemName: args.text.slice(0, 500), quantity: 1}];
-  // const order = await OrderRepository.createOrder({
-  //   laundryId: args.laundryId,
-  //   customerId: customer.id,
-  //   orderItems,
-  // });
-  // // Optional: confirmation message (your MessagingService is currently a stub).
-  // await MessagingService.sendText(fromE164, `Order received: ${order.id}`);
-  // return order;
 };
 
 const handleInteractiveResponse = async (
@@ -229,54 +198,15 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
           }
 
           if (msg.type === MSG_TYPE.AUDIO && msg.audio?.url) {
-            try {
-              const transcript = await transcribe(msg.audio.url);
-              logger("[webhook] audio transcribed", {transcript});
-
-              // const envelope = await interpretMessage(transcript);
-              // const handler = assistantIntentHandlers[envelope.intent];
-
-              // if (handler) {
-              //   const result = await handler(
-              //     {laundry, fromE164: fromDigits, text: transcript},
-              //     envelope,
-              //   );
-              //   if (result.replyText) {
-              //     MessagingService.sendText({
-              //       to: fromDigits,
-              //       message: result.replyText,
-              //     });
-              //   }
-              // }
-            } catch (err) {
-              logger("[webhook] audio processing failed", {error: err});
-            }
+            const transcript = await transcribe(msg.audio.url, laundry);
+            handleTextMessage({
+              laundry,
+              from: fromDigits,
+              text: transcript,
+            });
           }
         }
       }
-
-      // pseudo
-      // if (msg.type === "audio" && msg.audio?.url) {
-      //   const audioBytes = await fetch(msg.audio.url).then(r => r.arrayBuffer());
-      //   const transcript = await SpeechToTextService.transcribe(audioBytes);
-      //   const envelope = await interpretLaundryOperatorMessage({ text: transcript });
-      //   const result = await executeAssistantIntent({ laundry, fromE164, text: transcript }, envelope);
-      // }
-
-      // Status updates (V3). ([partner-docs.gupshup.io](https://partner-docs.gupshup.io/docs/set-callback-url-1))
-      // for (const st of value?.statuses ?? []) {
-      //   // For MVP, log only; later: persist against an OutboundMessage table.
-      //   console.info("[gupshup-webhook] status", {
-      //     laundryId: laundry.id,
-      //     status: st.status,
-      //     recipient: st.recipient_id
-      //       ? normalizePhone(st.recipient_id)
-      //       : undefined,
-      //     waMessageId: st.id,
-      //     gsId: st.gs_id,
-      //     ts: st.timestamp,
-      //   });
-      // }
     }
   }
 };

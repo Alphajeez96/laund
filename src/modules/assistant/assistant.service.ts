@@ -7,6 +7,7 @@ import {
   LlmEnvelopeSchema,
   type LlmEnvelope,
 } from "./assistant.validation";
+import {type Laundry} from "generated/prisma/client";
 
 type TranscribeResponse = {
   text: string;
@@ -62,13 +63,16 @@ export const interpretMessage = async (text: string): Promise<LlmEnvelope> => {
   }
 };
 
-export const transcribe = async (audioUrl: string): Promise<string> => {
+export const transcribe = async (
+  audioUrl: string,
+  laundry: Laundry,
+): Promise<string> => {
   const url = `${config.sttServiceUrl}/transcribe-url`;
 
   try {
     const response = await fetch(url, {
       method: "POST",
-      signal: AbortSignal.timeout(60_000),
+      signal: AbortSignal.timeout(300_000),
       body: JSON.stringify({audio_url: audioUrl}),
       headers: {"Content-Type": "application/json"},
     });
@@ -81,6 +85,7 @@ export const transcribe = async (audioUrl: string): Promise<string> => {
 
     const result: TranscribeResponse = await response.json();
     logger("[stt] transcription complete", {
+      // laundry,
       language: result.language,
       duration: result.duration_seconds,
       textLength: result.text.length,
@@ -88,7 +93,7 @@ export const transcribe = async (audioUrl: string): Promise<string> => {
 
     return result.text;
   } catch (err) {
-    logger("[stt] transcription failed", {error: err, audioUrl});
+    logger("[stt] transcription failed", {error: err, audioUrl, laundry});
     throw err;
   }
 };

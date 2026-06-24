@@ -75,7 +75,7 @@ async def transcribe_url(body: TranscribeURLRequest):
     suffix = Path(body.audio_url).suffix or ".wav"
 
     try:
-        async with httpx.AsyncClient(timeout=60.0) as client:
+        async with httpx.AsyncClient(timeout=300.0) as client:
             response = await client.get(body.audio_url)
             response.raise_for_status()
 
