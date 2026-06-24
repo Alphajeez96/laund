@@ -12,9 +12,10 @@ const envSchema = z.object({
   GUPSHUP_API_VERSION: z.string(),
   GUPSHUP_WEBHOOK_URL: z.string(),
   GUPSHUP_BASE_URL: z.string().min(1),
-  GUPSHUP_WEBHOOK_SECRET: z.string().min(1),
   GUPSHUP_CLIENT_SECRET: z.string().min(1),
+  GUPSHUP_WEBHOOK_SECRET: z.string().min(1),
   GUPSHUP_PARTNER_EMAIL: z.string().optional(),
+  STT_SERVICE_URL: z.string().default("http://localhost:8000"),
 });
 
 const env = envSchema.parse(process.env);
@@ -24,6 +25,7 @@ export default {
   env: env.NODE_ENV,
   activeLLM: env.ACTIVE_LLM,
   databaseUrl: env.DATABASE_URL,
+  sttServiceUrl: env.STT_SERVICE_URL,
   residentAppId: env.RESIDENT_APP_ID,
   gupshup: {
     baseUrl: env.GUPSHUP_BASE_URL,

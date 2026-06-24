@@ -3,13 +3,16 @@ import logger from "@/utils/logger";
 import type {Laundry} from "generated/prisma/client";
 import {toE164, toNationalDigits} from "@/utils/phone";
 import {MessagingService} from "../messaging/messaging.service";
-import {FLOW_CONFIG} from "@/integrations/gupshup/flows/flow-config";
 import {MSG_TYPE, type GupshupV3WebhookBody} from "./gupshup.types";
-import {interpretMessage} from "@/modules/assistant/assistant.service";
+import {FLOW_CONFIG} from "@/integrations/gupshup/flows/flow-config";
 import {LaundryRepository} from "@/modules/laundry/laundry.repository";
 import {assistantIntentHandlers} from "../assistant/assistant.handler";
 import {flowHandlers} from "@/integrations/gupshup/flows/flow.handlers";
 import {interactiveHandlers} from "@/integrations/gupshup/interactive.handlers";
+import {
+  transcribe,
+  interpretMessage,
+} from "@/modules/assistant/assistant.service";
 
 type IngestInput = {
   receivedAtMs: number;
@@ -188,7 +191,8 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
       const contactName = value?.contacts?.[0]?.profile?.name ?? "";
       for (const msg of value?.messages ?? []) {
         if (msg.from) {
-          const fromDigits = toE164(msg.from);
+          // const fromDigits = toE164(msg.from);
+          const fromDigits = "2348030000011";
           const laundry = await LaundryRepository.findByContact(fromDigits);
 
           if (!laundry) {
@@ -200,8 +204,7 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
           if (msg.type === MSG_TYPE.TEXT && msg.text?.body) {
             handleTextMessage({
               laundry,
-              // from: fromDigits,
-              from: "2348030000011",
+              from: fromDigits,
               text: msg.text.body,
             });
           }
@@ -223,6 +226,31 @@ const handleV3 = async (body: GupshupV3WebhookBody) => {
             msg.interactive?.button_reply?.id
           ) {
             handleInteractiveResponse(msg.interactive?.button_reply, laundry);
+          }
+
+          if (msg.type === MSG_TYPE.AUDIO && msg.audio?.url) {
+            try {
+              const transcript = await transcribe(msg.audio.url);
+              logger("[webhook] audio transcribed", {transcript});
+
+              // const envelope = await interpretMessage(transcript);
+              // const handler = assistantIntentHandlers[envelope.intent];
+
+              // if (handler) {
+              //   const result = await handler(
+              //     {laundry, fromE164: fromDigits, text: transcript},
+              //     envelope,
+              //   );
+              //   if (result.replyText) {
+              //     MessagingService.sendText({
+              //       to: fromDigits,
+              //       message: result.replyText,
+              //     });
+              //   }
+              // }
+            } catch (err) {
+              logger("[webhook] audio processing failed", {error: err});
+            }
           }
         }
       }

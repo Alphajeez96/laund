@@ -1,4 +1,5 @@
 import ollama from "ollama";
+import logger from "@/utils/logger";
 import config from "@/config/config";
 import {buildSystemPrompt} from "./assistant.prompt";
 import {
@@ -6,7 +7,12 @@ import {
   LlmEnvelopeSchema,
   type LlmEnvelope,
 } from "./assistant.validation";
-import logger from "@/utils/logger";
+
+type TranscribeResponse = {
+  text: string;
+  language: string | null;
+  duration_seconds: number | null;
+};
 
 const assistantFormatSchema = {
   type: "object",
@@ -53,5 +59,36 @@ export const interpretMessage = async (text: string): Promise<LlmEnvelope> => {
     return unknownFallback(
       "Sorry I couldn't interpret that request. Please rephrase and include any key details",
     );
+  }
+};
+
+export const transcribe = async (audioUrl: string): Promise<string> => {
+  const url = `${config.sttServiceUrl}/transcribe-url`;
+
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      signal: AbortSignal.timeout(60_000),
+      body: JSON.stringify({audio_url: audioUrl}),
+      headers: {"Content-Type": "application/json"},
+    });
+
+    if (!response.ok) {
+      const errBody = await response.text().catch(() => "unknown error");
+      logger("[stt] upstream error", {status: response.status, body: errBody});
+      throw new Error(`STT service returned ${response.status}`);
+    }
+
+    const result: TranscribeResponse = await response.json();
+    logger("[stt] transcription complete", {
+      language: result.language,
+      duration: result.duration_seconds,
+      textLength: result.text.length,
+    });
+
+    return result.text;
+  } catch (err) {
+    logger("[stt] transcription failed", {error: err, audioUrl});
+    throw err;
   }
 };

@@ -1,0 +1,27 @@
+[project]
+name = "laundryops-stt"
+version = "0.1.0"
+description = "Speech-to-text microservice for LaundryOps using faster-whisper"
+requires-python = ">=3.11"
+dependencies = [
+    "fastapi>=0.115.0",
+    "uvicorn[standard]>=0.34.0",
+    "faster-whisper>=1.1.0",
+    "httpx>=0.28.0",
+    "python-multipart>=0.0.20",
+    "pydantic-settings>=2.7.0",
+    "python-dotenv>=1.0.0",
+]
+
+[project.scripts]
+stt = "app.main:main"
+
+[build-system]
+requires = ["setuptools>=75.0"]
+build-backend = "setuptools.build_meta"
+
+[tool.ruff]
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "W"]

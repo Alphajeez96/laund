@@ -20,25 +20,26 @@ export interface GupshupV3WebhookBody {
           wa_id?: string;
         }>;
 
-        messages?: Array<{
-          from?: string;
-          id?: string;
-          timestamp?: string | number;
-          type?: string;
-          text?: {body?: string};
-          flow?: {
-            flow_id: string;
-            flow_token?: string;
-            data: {
-              screen: string;
-              response: Record<string, unknown>;
+          messages?: Array<{
+            from?: string;
+            id?: string;
+            timestamp?: string | number;
+            type?: string;
+            text?: {body?: string};
+            audio?: {url: string};
+            flow?: {
+              flow_id: string;
+              flow_token?: string;
+              data: {
+                screen: string;
+                response: Record<string, unknown>;
+              };
             };
-          };
-          interactive?: {
-            type: string;
-            button_reply: {id: string; title: string};
-          };
-        }>;
+            interactive?: {
+              type: string;
+              button_reply: {id: string; title: string};
+            };
+          }>;
 
         statuses?: Array<{
           gs_id?: string;

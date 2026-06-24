@@ -3,3 +3,10 @@ node_modules
 .env
 dist/
 /generated/prisma
+
+# Python STT service
+speech-service/.venv/
+speech-service/__pycache__/
+speech-service/**/__pycache__/
+speech-service/*.egg-info/
+speech-service/.ruff_cache/
